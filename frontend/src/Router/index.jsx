@@ -19,7 +19,6 @@ const DashboardAuthLayout = lazy(() => import('../layouts/DashboardAuthLayout.js
 const DashboardProtectedLayout = lazy(() => import('../layouts/DashboardProtectedLayout.jsx'));
 const DashboardLogin = lazy(() => import('../views/Login.jsx'));
 const GoatManagement = lazy(()=>import('../views/GoatManagement.jsx'));
-const DriverManagementDetail = lazy(()=>import("../views/DriverManagementDetail.jsx"));
 
 const SuspenseWrapper = ({ children }) => (
   <Suspense fallback={<Loader />}>{children}</Suspense>
