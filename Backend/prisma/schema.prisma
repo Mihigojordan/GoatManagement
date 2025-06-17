@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id String @id @default(uuid())
+  names String @unique
+  email String @unique
+  password String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+
+enum Status {
+  checkedin
+  checkout
+}
+
+model Goat {
+  id                       String   @id @default(uuid())
+
+  // Basic Identification Details
+  goatName                String
+  breed                   String
+  dateOfBirth             DateTime?
+  Gender                  String?
+  color                   String?
+  weight                  Float?
+  sireName                String?
+  sireRegistrationNumber  String?
+  damName                 String?
+  damRegistrationNumber   String?
+  breederName             String?
+  image                   String?
+  status                  Status    @default(checkedin)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+}

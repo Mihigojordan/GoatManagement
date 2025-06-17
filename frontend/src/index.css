@@ -1,0 +1,52 @@
+@import url("https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Chivo, sans-serif;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Hide the spin buttons in Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Remove the default styling for number input */
+input[type="number"] {
+  appearance: none; /* For modern browsers */
+  -webkit-appearance: none; /* For Safari and Chrome */
+  -moz-appearance: textfield; /* For Firefox */
+  margin: 0;
+}
+/* Google Autocomplete Dropdown Styling */
+.pac-container {
+  @apply bg-gray-50 shadow-lg rounded-lg border border-gray-300 mt-1 w-[400px] max-h-[400px] overflow-y-auto;
+  z-index: 9999 !important; /* Ensure suggestions appear above other elements */
+}
+
+/* Style individual items inside dropdown */
+.pac-item {
+  @apply px-4 py-3 text-gray-900 cursor-pointer transition duration-150 flex items-center gap-3;
+}
+
+/* Hover effect on dropdown items */
+.pac-item:hover {
+  @apply bg-gray-50;
+}
+
+/* Style the location icon */
+.pac-icon {
+  @apply text-black;
+}
+
+/* Ensure suggestions dropdown appears above other elements */
+.pac-container {
+  z-index: 9999 !important;
+}
