@@ -35,13 +35,13 @@ jobs:
       # 5. Install frontend dependencies
       - name: Install Frontend Dependencies
         run: |
-          cd Frontend
+          cd frontend
           npm ci
 
       # 6. Build frontend project
       - name: Build Frontend
         run: |
-          cd Frontend
+          cd frontend
           npm run build
 
       # 7. Set up SSH key and known_hosts
@@ -83,5 +83,5 @@ jobs:
           host: 162.0.224.102
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "Frontend/dist/**" # or "Frontend/build/**" based on your framework
+          source: "frontend/dist/**" # or "Frontend/build/**" based on your framework
           target: "/var/www/goatmanagementfrontend"
