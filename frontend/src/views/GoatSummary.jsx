@@ -15,7 +15,7 @@ const GoatStatsCard = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:3000/goats/counts');
+        const response = await fetch('https://api.abyride.com/goats/counts');
         
         if (!response.ok) {
           throw new Error('Failed to fetch goat statistics');
