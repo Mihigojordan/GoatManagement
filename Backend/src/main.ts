@@ -9,6 +9,11 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+   app.enableCors({
+    origin: process.env.CORS_ORIGIN || 'https://goat.abyride.com',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  })
     // Serve barcodes folder statically under /barcodes
   app.use('/barcode', express.static(join(__dirname, '..', 'public/barcodes')));
 
@@ -16,11 +21,7 @@ async function bootstrap() {
   
   app.use(json());
   app.use(urlencoded({ extended: true }));
-  app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'https://goat.abyride.com',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-  })
+ 
     // Increase payload size limit for JSON and URL-encoded bodies
   app.use(bodyParser.json({ limit: '10mb' }));
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
