@@ -10,7 +10,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
     // Serve barcodes folder statically under /barcodes
-  app.use('/barcodes', express.static(join(__dirname, '..', 'public/barcodes')));
+  app.use('/barcode', express.static(join(__dirname, '..', 'public/barcodes')));
 
   app.use(cookieParser());
   app.use('/webhook', bodyParser.raw({ type: 'application/json' }));
