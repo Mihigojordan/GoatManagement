@@ -15,7 +15,7 @@ const GoatStatsCard = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:3000/goats/counts');
+        const response = await fetch('http://162.0.224.102:4000/goats/counts');
         
         if (!response.ok) {
           throw new Error('Failed to fetch goat statistics');
