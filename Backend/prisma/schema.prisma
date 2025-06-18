@@ -47,5 +47,5 @@ model Goat {
   status                  Status    @default(checkedin)
   note                    String    @default("no pest and diseases ")
   createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  updatedAt               DateTime  @default(now())
 }
