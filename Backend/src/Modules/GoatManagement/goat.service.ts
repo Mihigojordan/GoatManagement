@@ -7,6 +7,8 @@ import { EmailService } from './Email.service';
 import * as bwipjs from 'bwip-js';
 import * as fs from 'fs';
 import { join } from 'path';
+import { Status } from '@prisma/client';
+
 
 @Injectable()
 export class GoatService {
@@ -19,6 +21,18 @@ export class GoatService {
 
 async registerGoat(data: any) {
   // 1. Create the goat first to get the generated ID
+
+  // 1. Convert dateOfBirth to Date object
+if (data.dateOfBirth) {
+  data.dateOfBirth = new Date(data.dateOfBirth);
+}
+
+// 2. Convert weight to number if it's a string
+if (data.weight) {
+  data.weight = Number(data.weight);
+}
+
+
   const goat = await this.prisma.goat.create({
     data: {
       ...data,
@@ -50,26 +64,47 @@ async registerGoat(data: any) {
   // 4. Email barcode as attachment
   try {
     await this.emailService.sendEmail({
-      to: 'Mihigojordan8@gmail.com',
-      subject: '🐐 Goat Registered with Barcode (ID)',
-      text: `
-Goat Registered:
+  to: 'Mihigojordan8@gmail.com',
+  subject: '🐐 Goat Registered with Barcode (ID)',
+  html: `
+    <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;">
+      <h2 style="color: #2c3e50;">🐐 New Goat Registration</h2>
+      <p style="font-size: 16px; color: #333;">
+        The following goat has been successfully registered in the system:
+      </p>
+      <table style="width: 100%; max-width: 600px; border-collapse: collapse; margin-top: 20px;">
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ccc;"><strong>Name</strong></td>
+          <td style="padding: 8px; border: 1px solid #ccc;">${goat.goatName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ccc;"><strong>Breed</strong></td>
+          <td style="padding: 8px; border: 1px solid #ccc;">${goat.breed}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ccc;"><strong>Gender</strong></td>
+          <td style="padding: 8px; border: 1px solid #ccc;">${goat.Gender}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ccc;"><strong>Goat ID (Barcode)</strong></td>
+          <td style="padding: 8px; border: 1px solid #ccc; color: #d35400;"><strong>${goat.id}</strong></td>
+        </tr>
+      </table>
+      <p style="margin-top: 20px; font-size: 15px;">
+        ✅ The barcode image is attached. Please print and tag the goat accordingly.
+      </p>
+      <p style="font-size: 14px; color: #888;">Sent on ${new Date().toLocaleString()}</p>
+    </div>
+  `,
+  attachments: [
+    {
+      filename: `${fileName}`,
+      content: fs.createReadStream(barcodePath),
+      contentType: 'image/png',
+    },
+  ],
+});
 
-- Name: ${goat.goatName}
-- Barcode (Goat ID): ${goat.id}
-- Breed: ${goat.breed}
-- Sex: ${goat.Gender}
-
-Barcode image is attached. Please print and tag the goat accordingly.
-      `,
-      attachments: [
-        {
-          filename: `${fileName}`,
-          content: fs.createReadStream(barcodePath),
-          contentType: 'image/png',
-        },
-      ],
-    });
   } catch (error) {
     this.logger.error('Failed to send barcode email', error);
   }
@@ -84,5 +119,48 @@ Barcode image is attached. Please print and tag the goat accordingly.
   async getAllGoats() {
     return this.prisma.goat.findMany({ orderBy: { createdAt: 'desc' } });
   }
+
+  // Toggle goat status based on ID
+async toggleGoatStatus(goatId: string) {
+  const goat = await this.prisma.goat.findUnique({ where: { id: goatId } });
+
+  if (!goat) {
+    throw new Error('Goat not found');
+  }
+
+const newStatus = goat.status === Status.checkedin ? Status.checkout : Status.checkedin;
+
+  await this.prisma.goat.update({
+    where: { id: goatId },
+    data: { status: newStatus },
+  });
+
+  return {
+    message: `Goat ${goatId} status updated to ${newStatus}`,
+    status: newStatus,
+  };
+}
+
+async getGoatById(id: string) {
+  return this.prisma.goat.findUnique({
+    where: { id },
+  });
+}
+
+async getGoatCounts() {
+  const [total, checkedin, checkout] = await Promise.all([
+    this.prisma.goat.count(), // total goats
+    this.prisma.goat.count({ where: { status: 'checkedin' } }),
+    this.prisma.goat.count({ where: { status: 'checkout' } }),
+  ]);
+
+  return {
+    totalGoats: total,
+    checkedInGoats: checkedin,
+    checkedOutGoats: checkout,
+  };
+}
+
+
 
 }

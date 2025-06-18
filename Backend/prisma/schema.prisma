@@ -44,7 +44,6 @@ model Goat {
   sireRegistrationNumber  String?
   damName                 String?
   damRegistrationNumber   String?
-  breederName             String?
   image                   String?
   status                  Status    @default(checkedin)
   createdAt               DateTime  @default(now())

@@ -106,7 +106,7 @@ export default function Login() {
 
       // Delay navigation slightly to let alert show
       setTimeout(() => {
-        navigate('/dispatch/dashboard', { replace: true });
+        navigate('/dashboard', { replace: true });
       }, 2000);
 
     } catch (error) {
@@ -129,12 +129,12 @@ export default function Login() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-2">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-teal-100 flex items-center justify-center p-2">
       <div className="bg-white rounded-2xl shadow-2xl min-h-[30vh] flex justify-center flex-col p-6 w-full max-w-md relative overflow-hidden">
         {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full -translate-y-16 translate-x-16 opacity-10"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-300 to-blue-500 rounded-full translate-y-12 -translate-x-12 opacity-10"></div>
-        <div className="absolute top-1/2 left-0 w-2 h-16 bg-gradient-to-b from-blue-400 to-blue-600 opacity-20"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-teal-500 to-teal-500 rounded-full -translate-y-16 translate-x-16 opacity-10"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-teal-300 to-teal-500 rounded-full translate-y-12 -translate-x-12 opacity-10"></div>
+        <div className="absolute top-1/2 left-0 w-2 h-16 bg-gradient-to-b from-teal-400 to-teal-600 opacity-20"></div>
         
         {/* Logo and Header */}
         <div className="text-center mb-4 relative z-10">
@@ -164,7 +164,7 @@ export default function Login() {
               value={email}
               onChange={handleChange}
               placeholder="Enter your admin email"
-              className={`w-full px-3 py-2 text-xs  border border-gray-300 rounded-lg  focus:border-none outline-none  focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400 ${
+              className={`w-full px-3 py-2 text-xs  border border-gray-300 rounded-lg  focus:border-none outline-none  focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-gray-400 ${
                 touched.email && errors.email ? 'border-red-500' : 'border-gray-300'
               }`}
           
@@ -185,7 +185,7 @@ export default function Login() {
               value={password}
               onChange={handleChange}
               placeholder="Enter your password"
-                 className={`w-full px-3 py-2 text-xs  border border-gray-300 rounded-lg  focus:border-none outline-none  focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400 ${
+                 className={`w-full px-3 py-2 text-xs  border border-gray-300 rounded-lg  focus:border-none outline-none  focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 hover:border-gray-400 ${
                 touched.email && errors.email ? 'border-red-500' : 'border-gray-300'
               }`}
               disabled={isLoading}
@@ -198,7 +198,7 @@ export default function Login() {
           <button
             onClick={handleSubmit}
             disabled={!!errors.email || !!errors.password || isLoading}
-            className={` text-sm w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-4 focus:ring-teal-300 font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
+            className={` text-sm w-full bg-gradient-to-r from-teal-600 to-teal-500 text-white py-2 px-4 rounded-lg hover:from-teal-700 hover:to-teal-800 focus:outline-none focus:ring-4 focus:ring-teal-300 font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
               (errors.email || errors.password || isLoading) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -208,7 +208,7 @@ export default function Login() {
         
         {/* Footer accent */}
         <div className="mt-4 text-center relative z-10">
-          <div className="w-16 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
+          <div className="w-16 h-1 bg-gradient-to-r from-teal-400 to-teal-600 mx-auto rounded-full"></div>
         </div>
       </div>
     </div>

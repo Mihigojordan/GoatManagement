@@ -18,8 +18,9 @@ const DashboardLayout = lazy(() => import('../layouts/DashboardLayout.jsx'));
 const DashboardAuthLayout = lazy(() => import('../layouts/DashboardAuthLayout.jsx'));
 const DashboardProtectedLayout = lazy(() => import('../layouts/DashboardProtectedLayout.jsx'));
 const DashboardLogin = lazy(() => import('../views/Login.jsx'));
-const GoatManagement = lazy(()=>import('../views/GoatManagement.jsx'));
-
+const GoatManagement = lazy(() => import('../views/GoatManagement.jsx'));
+const GoatSummary = lazy(() => import('../views/GoatSummary.jsx'));
+const GoatDetail = lazy(() => import('../views/GoatDetail.jsx'));
 const SuspenseWrapper = ({ children }) => (
   <Suspense fallback={<Loader />}>{children}</Suspense>
 );
@@ -43,10 +44,10 @@ const routes = [
             element: <DashboardLogin />,
 
           },
-        
+
         ]
       },
-  
+
       {
         path: "dashboard",
         element: <DashboardProtectedLayout />,
@@ -60,27 +61,50 @@ const routes = [
               </SuspenseWrapper>
             ),
             children: [
-          
-                   {
-                path: "manage-goat",
+
+              {
+                index: true,
                 element: (
                   <SuspenseWrapper>
-                    <GoatManagement/>
+                    <GoatSummary />
                   </SuspenseWrapper>
                 ),
-             
-              },    
+              },
+
               {
-              path: "checkout",
-              element: (
+                path: "manage-goat",
+                children: [
+                  {
+                    index: true,
+                    element: (
+                      <SuspenseWrapper>
+                        <GoatManagement />
+                      </SuspenseWrapper>
+                    ),
+                  },
+                  {
+                    path: ":id",
+                    element: (
+                      <SuspenseWrapper>
+                        <GoatDetail />
+                      </SuspenseWrapper>
+                    ),
+                  },
+                ]
+              },
+
+
+              {
+                path: "check_in-check_out",
+                element: (
                   <SuspenseWrapper>
                     <BarcodeCheckout />
                   </SuspenseWrapper>
                 ),
-                  },
-            
-              
-           
+              },
+
+
+
             ]
           }
         ]

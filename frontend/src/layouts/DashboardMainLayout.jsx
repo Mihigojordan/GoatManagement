@@ -6,18 +6,15 @@ import Header from '../components/Header'
 
 function DashboardMainLayout() {
     return (
-        <div className=" flex ">
-            <Sidebar />
-
-            <div className=" w-[82%] ml-[18%]   z-50">
+        <div className=" ">
+       
                 <Header />
-                <div className="p-6 bg-gray-100  -z-10">
-
+                <div className="p-6">
                     <Outlet />
                 </div>
 
             </div>
-        </div>
+
     )
 }
 

@@ -20,16 +20,34 @@ class GoatManagementService {
     );
   }
 
-  // Register a new goat
-  async registerGoat(goatData) {
-    try {
-      const response = await this.api.post('/goats', goatData);
-      return response.data;
-    } catch (error) {
-      console.error('Register goat error:', error);
-      throw error;
-    }
+async registerGoat(goatData) {
+  try {
+    const isFormData = goatData instanceof FormData;
+
+    const response = await this.api.post('/goats', goatData, {
+      headers: {
+        'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Register goat error:', error);
+    throw error;
   }
+}
+
+  // Scan goat (RFID or other scanning method)
+ async scanGoat(goatId) {
+  try {
+    const response = await this.api.post('/goats/scan', { goatId });
+    return response.data;
+  } catch (error) {
+    console.error('Scan goat error:', error);
+    throw error;
+  }
+}
+
 
   // Get all goats with optional filters (breed, age, etc.)
   async getGoats(params = {}) {

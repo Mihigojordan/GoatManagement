@@ -13,7 +13,7 @@ async function bootstrap() {
   app.use('/barcode', express.static(join(__dirname, '..', 'public/barcodes')));
 
   app.use(cookieParser());
-  app.use('/webhook', bodyParser.raw({ type: 'application/json' }));
+  
   app.use(json());
   app.use(urlencoded({ extended: true }));
   app.enableCors({
@@ -21,6 +21,9 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   })
+    // Increase payload size limit for JSON and URL-encoded bodies
+  app.use(bodyParser.json({ limit: '10mb' }));
+  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
   await app.listen(process.env.PORT ?? 3000);
   
 }
