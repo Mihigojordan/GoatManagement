@@ -10,37 +10,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout your code repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Setup Node.js environment for backend build
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
+      # 3. Install backend dependencies
       - name: Install Backend Dependencies
         run: |
           cd Backend
           npm ci
 
+      # 4. Build backend project
       - name: Build Backend
         run: |
           cd Backend
           npm run build
 
-      - name: Set up SSH Agent
+      # 5. Setup SSH key and known_hosts (for passwordless ssh)
+      - name: Set up SSH key and known_hosts
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H 162.0.224.102 >> ~/.ssh/known_hosts
 
+      # 6. Start ssh-agent and add private key
+      - name: Start ssh-agent and add key
+        run: |
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+
+      # 7. Clean old backend files on server via SSH
       - name: Clean old backend files on server
         run: |
-          ssh -i ~/.ssh/id_rsa root@162.0.224.102 << 'EOF'
-            rm -rf /var/www/goatmanagementbackend
-          EOF
+          ssh -o StrictHostKeyChecking=no root@162.0.224.102 "rm -rf /var/www/goatmanagementbackend"
 
+      # 8. Upload backend files to the server with SCP action
       - name: Upload Backend to Server
         uses: appleboy/scp-action@v0.1.7
         with:
