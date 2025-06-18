@@ -31,21 +31,21 @@ enum Status {
 }
 
 model Goat {
-  id                       String   @id @default(uuid())
-
-  // Basic Identification Details
+ id String @id
+// Basic Identification Details
   goatName                String
   breed                   String
   dateOfBirth             DateTime?
   Gender                  String?
   color                   String?
   weight                  Float?
-  sireName                String?
+
   sireRegistrationNumber  String?
-  damName                 String?
+
   damRegistrationNumber   String?
   image                   String?
   status                  Status    @default(checkedin)
+  note                    String    @default("no pest and diseases ")
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 }

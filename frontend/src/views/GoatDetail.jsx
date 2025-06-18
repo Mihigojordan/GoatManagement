@@ -122,10 +122,7 @@ const fullImageUrl = goat.image
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-medium text-gray-700 mb-2">Sire (Father)</h4>
                   <div className="space-y-2">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Name</p>
-                      <p className="text-gray-800">{goat.sireName}</p>
-                    </div>
+                  
                     <div>
                       <p className="text-sm font-medium text-gray-500">Registration Number</p>
                       <p className="text-gray-800">{goat.sireRegistrationNumber}</p>
@@ -136,10 +133,7 @@ const fullImageUrl = goat.image
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-medium text-gray-700 mb-2">Dam (Mother)</h4>
                   <div className="space-y-2">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Name</p>
-                      <p className="text-gray-800">{goat.damName}</p>
-                    </div>
+                  
                     <div>
                       <p className="text-sm font-medium text-gray-500">Registration Number</p>
                       <p className="text-gray-800">{goat.damRegistrationNumber}</p>
@@ -151,9 +145,15 @@ const fullImageUrl = goat.image
           </div>
           
           {/* Additional Information */}
-          <div className="mt-6 bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-semibold text-gray-700 mb-4 pb-2 border-b">Additional Details</h3>
+          <h3 className="text-xl font-semibold text-gray-700 mb-4 pb-2 border-b mt-4">Additional Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div className="bg-gray-50 p-3 rounded-lg ">
+                <p className="text-sm font-medium text-gray-500">Addition Note</p>
+                <p className="text-gray-800">{goat.note}</p>
+              </div>
+          <div className="mt-6 bg-white rounded-lg shadow-md p-6">
+            
+
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-sm font-medium text-gray-500">Goat ID</p>
                 <p className="text-gray-800">{goat.id}</p>

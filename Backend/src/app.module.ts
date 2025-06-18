@@ -12,7 +12,6 @@ import { GoatModule } from './Modules/GoatManagement/goat.module';
       isGlobal: true, 
     }),
     PrismaModule, 
-
     AdminModule,
     GoatModule
   ],

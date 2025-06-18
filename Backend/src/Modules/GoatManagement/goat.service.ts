@@ -21,35 +21,49 @@ export class GoatService {
 
 async registerGoat(data: any) {
   // 1. Create the goat first to get the generated ID
+  // Convert dateOfBirth to Date object
+  if (data.dateOfBirth) {
+    data.dateOfBirth = new Date(data.dateOfBirth);
+  }
 
-  // 1. Convert dateOfBirth to Date object
-if (data.dateOfBirth) {
-  data.dateOfBirth = new Date(data.dateOfBirth);
+  // Convert weight to number
+  if (data.weight) {
+    data.weight = Number(data.weight);
+  }
+
+  // Generate unique 7-character ID
+function generate7DigitId() {
+  return Math.floor(1000000 + Math.random() * 9000000).toString(); // Ensures a 7-digit number
 }
 
-// 2. Convert weight to number if it's a string
-if (data.weight) {
-  data.weight = Number(data.weight);
-}
 
+  // Ensure uniqueness
+// Ensure uniqueness
+let generatedId: string;
+do {
+  generatedId = generate7DigitId();
+} while (await this.prisma.goat.findUnique({ where: { id: generatedId } }));
 
+  // Create the goat record
   const goat = await this.prisma.goat.create({
-    data: {
-      ...data,
-    },
+ data: {
+  ...data,
+  id: generatedId, // always override last to prevent accidental override
+}
   });
 
-  // 2. Use goat ID as barcode value
   const barcodeValue = goat.id;
 
-  const barcodeBuffer = await bwipjs.toBuffer({
-    bcid: 'code128',
-    text: barcodeValue, // ID becomes the scannable value
-    scale: 3,
-    height: 10,
-    includetext: true,
-    textxalign: 'center',
-  });
+
+const barcodeBuffer = await bwipjs.toBuffer({
+  bcid: 'ean8',              // Change from 'code128' to 'ean8'
+  text: barcodeValue,        // barcodeValue must be a valid 7- or 8-digit number (EAN-8 requires numeric input)
+  scale: 3,                  // Adjusted scale for better visibility
+  height: 10,                // Height in mm (optional, adjust as needed)
+  includetext: true,
+  textxalign: 'center',
+});
+
 
   // 3. Save barcode image
   const barcodeDir = join(__dirname, '../../../public/barcodes');

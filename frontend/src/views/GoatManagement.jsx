@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Heart, Eye, Calendar, Camera, User, Edit, Trash2 } from "lucide-react";
+import { X, Heart, Eye, Calendar, Camera, User, Edit, Trash2,UploadCloud } from "lucide-react";
 import { Link } from "react-router-dom";
 import GoatRegistrationService from "../Services/GoatManagement";
 
@@ -11,6 +11,8 @@ const GoatRegistrationManagement = () => {
   const [currentRegistration, setCurrentRegistration] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null);
+  const [ageInMonths, setAgeInMonths] = useState(null);
+
 
   const [formData, setFormData] = useState({
     // Basic Identification Details matching your model
@@ -20,11 +22,10 @@ const GoatRegistrationManagement = () => {
     Gender: "",
     color: "",
     weight: "",
-    
-    // Parentage Information
-    sireName: "",
+    note: "",
+
     sireRegistrationNumber: "",
-    damName: "",
+
     damRegistrationNumber: "",
 
     // Image will be sent as file, not in formData
@@ -37,6 +38,12 @@ const GoatRegistrationManagement = () => {
     { value: "sold", label: "Sold", color: "bg-blue-100 text-blue-800" },
     { value: "sick", label: "Sick", color: "bg-red-100 text-red-800" }
   ];
+
+
+
+
+
+
 
   useEffect(() => {
     loadRegistrations();
@@ -54,13 +61,13 @@ const GoatRegistrationManagement = () => {
     }
   };
 
-  const handleImageUpload = (e) => {
+ const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImageFile(file); // Store the actual file object
+      setImageFile(file); // Store actual file for backend
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result); // Only for preview
+        setImagePreview(reader.result); // Set preview
       };
       reader.readAsDataURL(file);
     }
@@ -79,10 +86,10 @@ const GoatRegistrationManagement = () => {
             Gender: registration.Gender || "",
             color: registration.color || "",
             weight: registration.weight || "",
-            sireName: registration.sireName || "",
             sireRegistrationNumber: registration.sireRegistrationNumber || "",
-            damName: registration.damName || "",
             damRegistrationNumber: registration.damRegistrationNumber || "",
+            note:registration.note || "",
+
       }
         : {
             goatName: "",
@@ -91,9 +98,8 @@ const GoatRegistrationManagement = () => {
             Gender: "",
             color: "",
             weight: "",
-            sireName: "",
+            note: "",
             sireRegistrationNumber: "",
-            damName: "",
             damRegistrationNumber: "",
           }
     );
@@ -107,13 +113,26 @@ const GoatRegistrationManagement = () => {
     setImageFile(null);
   };
 
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+const handleFormChange = (e) => {
+  const { name, value } = e.target;
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+
+  if (name === 'dateOfBirth') {
+    const birthDate = new Date(value);
+    const now = new Date();
+    const months =
+      (now.getFullYear() - birthDate.getFullYear()) * 12 +
+      (now.getMonth() - birthDate.getMonth());
+
+    setAgeInMonths(months >= 0 ? months : 0); // Prevent negative values
+  }
+};
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -165,15 +184,6 @@ const GoatRegistrationManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this registration?")) return;
-    try {
-      await GoatRegistrationService.delete(id);
-      await loadRegistrations();
-    } catch (err) {
-      setError(err.message || "Failed to delete registration");
-    }
-  };
 
   const getStatusColor = (status) => {
     const statusObj = statusOptions.find(s => s.value === status);
@@ -221,7 +231,7 @@ const GoatRegistrationManagement = () => {
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="px-2 py-2 text-center font-semibold text-gray-700">Image</th>
-              <th className="px-2 py-2 text-center font-semibold text-gray-700">Goat Name</th>
+              <th className="px-2 py-2 text-center font-semibold text-gray-700">Farm Name</th>
               <th className="px-2 py-2 text-center font-semibold text-gray-700">Breed</th>
               <th className="px-2 py-2 text-center font-semibold text-gray-700">Gender</th>
               <th className="px-2 py-2 text-center font-semibold text-gray-700">DOB</th>
@@ -401,61 +411,95 @@ const GoatRegistrationManagement = () => {
                 <div className="lg:col-span-2">
                   <h4 className="font-medium text-gray-700 border-b pb-2 mb-4">Goat Image</h4>
                   <div className="flex flex-col sm:flex-row items-center gap-4">
-                    <div className="flex-shrink-0">
-                      {imagePreview ? (
-                        <img 
-                          src={imagePreview} 
-                          alt="Preview"
-                          className="w-24 h-24 rounded-full object-cover border-2 border-gray-300"
-                        />
-                      ) : (
-                        <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
-                          <Camera className="w-8 h-8 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Upload Goat Image
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Supported formats: JPG, PNG, GIF (Max 5MB)
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                           <div className="flex-shrink-0 relative">
+        {imagePreview ? (
+          <img 
+            src={imagePreview} 
+            alt="Preview"
+            className="w-24 h-24 rounded-full object-cover border-2 border-gray-300"
+          />
+        ) : (
+          <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
+            <Camera className="w-8 h-8 text-gray-400" />
+          </div>
+        )}
+
+        {/* Two buttons below image: Upload | Take Photo */}
+        <div className="mt-2 flex gap-3 justify-center">
+          {/* Upload from gallery */}
+          <label className="cursor-pointer flex items-center gap-1 text-sm text-blue-600 hover:underline">
+            <UploadCloud className="w-4 h-4" />
+            Upload
+            <input 
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageUpload}
+            />
+          </label>
+
+          {/* Open device camera */}
+          <label className="cursor-pointer flex items-center gap-1 text-sm text-green-600 hover:underline">
+            <Camera className="w-4 h-4" />
+            Camera
+            <input 
+              type="file"
+              accept="image/*"
+              capture="environment"   // ← opens device camera
+              className="hidden"
+              onChange={handleImageUpload}
+            />
+          </label>
+        </div>
+  </div>
+  </div>
+  </div>
+
 
                 {/* Basic Identification Details */}
-                <div className="space-y-4">
+                <div className="space-y-4 mt-1">
                   <h4 className="font-medium text-gray-700 border-b pb-2">Basic Identification Details</h4>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Goat Name *</label>
-                    <input
-                      type="text"
-                      name="goatName"
-                      value={formData.goatName}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Breed *</label>
-                    <input
-                      type="text"
-                      name="breed"
-                      value={formData.breed}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      required
-                    />
-                  </div>
+               <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Select Farm *
+  </label>
+  <select
+    name="goatName"
+    value={formData.goatName}
+    onChange={handleFormChange}
+    required
+    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+  >
+    <option value="">-- Select Farm --</option>
+    <option value="Ishimwe Farm UG">Ishimwe Farm UG</option>
+    <option value="Ishimwe Farm Rwanda">Ishimwe Farm Rwanda</option>
+  </select>
+</div>
+
+                 <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Breed *</label>
+  <select
+    name="breed"
+    value={formData.breed}
+    onChange={handleFormChange}
+    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+    required
+  >
+    <option value="">Select Breed</option>
+    <option value="Boer">Boer</option>
+    <option value="Kalahari Red">Kalahari Red</option>
+    <option value="Saanen">Saanen</option>
+    <option value="Toggenburg">Toggenburg</option>
+    <option value="Alpine">Alpine</option>
+    <option value="Anglo-Nubian">Anglo-Nubian</option>
+    <option value="Jamnapari">Jamnapari</option>
+    <option value="Savanna">Savanna</option>
+    <option value="Black Bengal">Black Bengal</option>
+    <option value="Other">Other</option>
+  </select>
+</div>
+
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
                     <input
@@ -465,7 +509,12 @@ const GoatRegistrationManagement = () => {
                       onChange={handleFormChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     />
+                      {ageInMonths !== null && (
+    <p className="text-sm text-gray-600 mt-1">{ageInMonths} month(s)</p>
+  )}
                   </div>
+
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
                     <select
@@ -479,33 +528,16 @@ const GoatRegistrationManagement = () => {
                       <option value="Female">Female</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
-                    <input
-                      type="text"
-                      name="color"
-                      value={formData.color}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
+
+
+               
                 </div>
 
                 {/* Parentage Information */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-gray-700 border-b pb-2">Parentage & Breeder Information</h4>
+                <div className="space-y-4 mt-5">
+              
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sire Name</label>
-                    <input
-                      type="text"
-                      name="sireName"
-                      value={formData.sireName}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sire Registration Number</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Mother Registration Number</label>
                     <input
                       type="text"
                       name="sireRegistrationNumber"
@@ -514,18 +546,9 @@ const GoatRegistrationManagement = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     />
                   </div>
+              
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Dam Name</label>
-                    <input
-                      type="text"
-                      name="damName"
-                      value={formData.damName}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Dam Registration Number</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Father Registration Number</label>
                     <input
                       type="text"
                       name="damRegistrationNumber"
@@ -545,8 +568,29 @@ const GoatRegistrationManagement = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     />
                   </div>
+                     <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                    <input
+                      type="text"
+                      name="color"
+                      value={formData.color}
+                      onChange={handleFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
                 </div>
+                
               </div>
+                     <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
+                    <textarea
+                      type="text"
+                      name="note"
+                      value={formData.note}
+                      onChange={handleFormChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
 
               <div className="mt-6 flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                 <button

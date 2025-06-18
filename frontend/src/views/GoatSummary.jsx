@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const GoatStatsCard = () => {
   const [stats, setStats] = useState({
@@ -156,9 +157,9 @@ const GoatStatsCard = () => {
               <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
               Live Updates
             </button>
-            <button className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors duration-200">
+            <Link to='/dashboard/manage-goat' className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors duration-200">
               View Details
-            </button>
+            </Link>
           </div>
         </div>
       </div>
