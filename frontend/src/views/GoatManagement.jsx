@@ -472,7 +472,7 @@ const handleFormChange = (e) => {
   >
     <option value="">-- Select Farm --</option>
     <option value="Ishimwe Farm UG">Ishimwe Farm UG</option>
-    <option value="Ishimwe Farm Rwanda">Ishimwe Farm Rwanda</option>
+    <option value="Ishimwe Farm Rwanda">Ishimwe Farm RW</option>
   </select>
 </div>
 

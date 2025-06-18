@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Setup Node.js environment for backend build
+      # 2. Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -32,7 +32,19 @@ jobs:
           cd Backend
           npm run build
 
-      # 5. Setup SSH key and known_hosts (for passwordless ssh)
+      # 5. Install frontend dependencies
+      - name: Install Frontend Dependencies
+        run: |
+          cd Frontend
+          npm ci
+
+      # 6. Build frontend project
+      - name: Build Frontend
+        run: |
+          cd Frontend
+          npm run build
+
+      # 7. Set up SSH key and known_hosts
       - name: Set up SSH key and known_hosts
         run: |
           mkdir -p ~/.ssh
@@ -40,18 +52,21 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H 162.0.224.102 >> ~/.ssh/known_hosts
 
-      # 6. Start ssh-agent and add private key
+      # 8. Start ssh-agent and add key
       - name: Start ssh-agent and add key
         run: |
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
 
-      # 7. Clean old backend files on server via SSH
-      - name: Clean old backend files on server
+      # 9. Clean old backend and frontend on server
+      - name: Clean old backend and frontend on server
         run: |
-          ssh -o StrictHostKeyChecking=no root@162.0.224.102 "rm -rf /var/www/goatmanagementbackend"
+          ssh -o StrictHostKeyChecking=no root@162.0.224.102 "
+            rm -rf /var/www/goatmanagementbackend &&
+            rm -rf /var/www/goatmanagementfrontend
+          "
 
-      # 8. Upload backend files to the server with SCP action
+      # 10. Upload backend files to the server
       - name: Upload Backend to Server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -60,3 +75,13 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "Backend/**"
           target: "/var/www/goatmanagementbackend"
+
+      # 11. Upload frontend build to the server
+      - name: Upload Frontend to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 162.0.224.102
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "Frontend/dist/**" # or "Frontend/build/**" based on your framework
+          target: "/var/www/goatmanagementfrontend"

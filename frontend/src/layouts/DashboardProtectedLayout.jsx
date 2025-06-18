@@ -40,13 +40,7 @@ function DashboardProtectedLayout() {
 
   if(!isAuthenticated) {
     // If not authenticated, redirect to the login page
-    return <Navigate to="/dispatch" replace />;
-  }
-
-
-  if(user.isLocked){
-    // If the user is locked, redirect to the lock screen
-    return <Navigate to='/dispatch/lock' replace />;
+    return <Navigate to="/" replace />;
   }
 
   // If authenticated, render the child routes (Outlet); otherwise, redirect to login

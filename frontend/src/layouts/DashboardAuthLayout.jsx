@@ -28,6 +28,6 @@ function DashboardAuthLayout() {
   }
 
   // If authenticated, render the child routes (Outlet); otherwise, redirect to login
-  return isAuthenticated ? <Outlet /> : <Navigate to="/dispatch/dashboard/reservation" replace />;
+  return isAuthenticated ? <Outlet /> : <Navigate to="/dashboard" replace />;
 }
 export default DashboardAuthLayout
