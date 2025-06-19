@@ -84,7 +84,7 @@ export class GoatService {
     // ✅ Email barcode
     try {
       await this.emailService.sendEmail({
-        to: 'Mihigojordan8@gmail.com',
+        to: 'ishimwegoatfarm@gmail.com',
         subject: '🐐 Goat Registered with Barcode (ID)',
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;">
