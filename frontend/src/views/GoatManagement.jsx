@@ -61,17 +61,48 @@ const GoatRegistrationManagement = () => {
     }
   };
 
- const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file); // Store actual file for backend
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result); // Set preview
-      };
-      reader.readAsDataURL(file);
+// Enhanced handleImageUpload function with debugging:
+const handleImageUpload = (e) => {
+  const file = e.target.files[0];
+  console.log('File selected:', file); // Debug log
+  
+  if (file) {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file');
+      return;
     }
-  };
+    
+    // Validate file size (optional - adjust as needed)
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      setError('Image file too large. Please select an image under 5MB');
+      return;
+    }
+    
+    console.log('File details:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified
+    });
+    
+    setImageFile(file); // Store actual file for backend
+    setError(''); // Clear any previous errors
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      console.log('FileReader completed successfully');
+      setImagePreview(reader.result); // Set preview
+    };
+    reader.onerror = (error) => {
+      console.error('FileReader error:', error);
+      setError('Failed to read image file');
+    };
+    reader.readAsDataURL(file);
+  } else {
+    console.log('No file selected');
+  }
+};
 
   const handleShowModal = (registration = null) => {
     setCurrentRegistration(registration);
@@ -408,52 +439,53 @@ const handleFormChange = (e) => {
             <form onSubmit={handleSubmit} className="p-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Image Upload Section */}
-                <div className="lg:col-span-2">
-                  <h4 className="font-medium text-gray-700 border-b pb-2 mb-4">Goat Image</h4>
-                  <div className="flex flex-col sm:flex-row items-center gap-4">
-                           <div className="flex-shrink-0 relative">
-        {imagePreview ? (
-          <img 
-            src={imagePreview} 
-            alt="Preview"
-            className="w-24 h-24 rounded-full object-cover border-2 border-gray-300"
-          />
-        ) : (
-          <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
-            <Camera className="w-8 h-8 text-gray-400" />
-          </div>
-        )}
-
-        {/* Two buttons below image: Upload | Take Photo */}
-        <div className="mt-2 flex gap-3 justify-center">
-          {/* Upload from gallery */}
-          <label className="cursor-pointer flex items-center gap-1 text-sm text-blue-600 hover:underline">
-            <UploadCloud className="w-4 h-4" />
-            Upload
-            <input 
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageUpload}
-            />
-          </label>
-
-          {/* Open device camera */}
-          <label className="cursor-pointer flex items-center gap-1 text-sm text-green-600 hover:underline">
-            <Camera className="w-4 h-4" />
-            Camera
-            <input 
-              type="file"
-              accept="image/*"
-              capture="environment"   // ← opens device camera
-              className="hidden"
-              onChange={handleImageUpload}
-            />
-          </label>
+        
+<div className="lg:col-span-2">
+  <h4 className="font-medium text-gray-700 border-b pb-2 mb-4">Goat Image</h4>
+  <div className="flex flex-col sm:flex-row items-center gap-4">
+    <div className="flex-shrink-0 relative">
+      {imagePreview ? (
+        <img 
+          src={imagePreview} 
+          alt="Preview"
+          className="w-24 h-24 rounded-full object-cover border-2 border-gray-300"
+        />
+      ) : (
+        <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
+          <Camera className="w-8 h-8 text-gray-400" />
         </div>
+      )}
+
+      {/* Two buttons below image: Upload | Take Photo */}
+      <div className="mt-2 flex gap-3 justify-center">
+        {/* Upload from gallery */}
+        <label className="cursor-pointer flex items-center gap-1 text-sm text-blue-600 hover:underline">
+          <UploadCloud className="w-4 h-4" />
+          Upload
+          <input 
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageUpload}
+          />
+        </label>
+
+        {/* Open device camera - improved version */}
+        <label className="cursor-pointer flex items-center gap-1 text-sm text-green-600 hover:underline">
+          <Camera className="w-4 h-4" />
+          Camera
+          <input 
+            type="file"
+            accept="image/*"
+            capture="user"  // Changed from "environment" to "user" - try both
+            className="hidden"
+            onChange={handleImageUpload}
+          />
+        </label>
+      </div>
+    </div>
   </div>
-  </div>
-  </div>
+</div>
 
 
                 {/* Basic Identification Details */}
