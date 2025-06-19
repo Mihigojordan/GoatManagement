@@ -59,7 +59,7 @@ const Header = () => {
             <div className="text-xl sm:text-2xl font-bold text-teal-600 flex items-center">
               <span className="text-2xl sm:text-2xl mr-2">🐐</span>
               <span className="hidden xs:inline">GoatSys</span>
-              <span className="xs:hidden"> ISHIMWE&apos;s Goat Management System</span>
+              <span className="xs:hidden"> ISHIMWE&apos;s Farm M.S</span>
             </div>
           </div>
 
