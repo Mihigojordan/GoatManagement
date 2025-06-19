@@ -27,11 +27,19 @@ export class GoatController {
   FileInterceptor('image', {
     storage: diskStorage({
       destination: './uploads/goats',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        const ext = extname(file.originalname);
-        cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-      },
+ filename: (req, file, cb) => {
+  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+
+  let ext = extname(file.originalname);
+
+  // If no extension, fallback to .jpg
+  if (!ext) {
+    ext = '.jpg';
+  }
+
+  cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+},
+
     }),
   }),
 )

@@ -465,23 +465,13 @@ const handleFormChange = (e) => {
           <input 
             type="file"
             accept="image/*"
+            capture="environment"
             className="hidden"
             onChange={handleImageUpload}
           />
         </label>
 
-        {/* Open device camera - improved version */}
-        <label className="cursor-pointer flex items-center gap-1 text-sm text-green-600 hover:underline">
-          <Camera className="w-4 h-4" />
-          Camera
-          <input 
-            type="file"
-            accept="image/*"
-            capture="user"  // Changed from "environment" to "user" - try both
-            className="hidden"
-            onChange={handleImageUpload}
-          />
-        </label>
+    
       </div>
     </div>
   </div>
