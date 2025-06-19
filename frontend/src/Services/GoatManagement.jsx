@@ -60,6 +60,8 @@ async registerGoat(goatData) {
     }
   }
 
+  
+
   // Get goat details by ID
   async getGoatById(goatId) {
     try {
@@ -70,6 +72,17 @@ async registerGoat(goatData) {
       throw error;
     }
   }
+  // Get goat details by ID
+  async getGoatCounts() {
+    try {
+      const response = await this.api.get(`/goats/counts`);
+      return response.data;
+    } catch (error) {
+      console.error('Get goat by ID error:', error);
+      throw error;
+    }
+  }
+
 
   // Update goat information
   async updateGoat(goatId, goatData) {

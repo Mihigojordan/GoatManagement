@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
-import BarcodeScannerComponent from "react-qr-barcode-scanner";
 import { BrowserMultiFormatReader } from '@zxing/browser';
-import axios from 'axios';
+import { BarcodeFormat, DecodeHintType } from '@zxing/library';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import GoatRegistrationService from "../Services/GoatManagement";
+import BarcodeScannerComponent from "react-qr-barcode-scanner";
 
 
 import { 
@@ -58,36 +58,35 @@ const GoatCheckinCheckout = () => {
 
   const handleUpdateStatus = async (goatId) => {
     setIsLoading(true);
-  try {
-    // Use the service instead of direct axios call
-    const result = await GoatRegistrationService.scanGoat(goatId);
-    
-    await Swal.fire({
-      title: '🎉 Success!',
-      html: `
-        <div class="text-center">
-          <div class="text-3xl mb-2">✅</div>
-          <p class="text-sm">${result.message}</p>
-        </div>
-      `,
-      icon: 'success',
-      timer: 1500,
-      showConfirmButton: false,
-      customClass: {
-        popup: 'rounded-xl'
-      }
-    });
+    try {
+      const result = await GoatRegistrationService.scanGoat(goatId);
       
+      await Swal.fire({
+        title: '🎉 Success!',
+        html: `
+          <div class="text-center">
+            <div class="text-3xl mb-2">✅</div>
+            <p class="text-sm">${result.message}</p>
+          </div>
+        `,
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        customClass: {
+          popup: 'rounded-xl'
+        }
+      });
+
       setScannedId('');
       setManualId('');
-      
+
       setTimeout(() => {
         navigate('/dashboard/manage-goat');
       }, 1500);
-      
+
     } catch (error) {
       console.error('Error updating goat status:', error);
-      
+
       Swal.fire({
         title: '❌ Error!',
         html: `
@@ -102,7 +101,7 @@ const GoatCheckinCheckout = () => {
           popup: 'rounded-xl'
         }
       });
-      
+
       setStatusMessage('Failed to update status');
     } finally {
       setIsLoading(false);
@@ -115,28 +114,56 @@ const GoatCheckinCheckout = () => {
 
     setIsLoading(true);
     const imageUrl = URL.createObjectURL(file);
-    const codeReader = new BrowserMultiFormatReader();
 
-    try {
-      const result = await codeReader.decodeFromImageUrl(imageUrl);
-      const scanned = result.getText();
-      setScannedId(scanned);
-      await showConfirmationDialog(scanned);
-    } catch (err) {
-      console.error('Error decoding barcode image:', err);
+    const img = new Image();
+    img.src = imageUrl;
+
+    img.onload = async () => {
+      const codeReader = new BrowserMultiFormatReader();
+
+      // Expand hints to multiple barcode formats to improve decoding success
+      const hints = new Map();
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.CODE_39,
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.QR_CODE,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.UPC_E,
+        BarcodeFormat.ITF,
+      ]);
+
+      try {
+        const result = await codeReader.decodeFromImageElement(img, hints);
+        const scanned = result.getText();
+        setScannedId(scanned);
+        await showConfirmationDialog(scanned);
+      } catch (err) {
+        console.error('Error decoding barcode image:', err);
+        Swal.fire({
+          title: '❌ Error',
+          text: 'Could not decode barcode. Please try a clearer or different barcode image.',
+          icon: 'error',
+          customClass: {
+            popup: 'rounded-xl'
+          }
+        });
+        setStatusMessage('Could not decode barcode.');
+      } finally {
+        setIsLoading(false);
+        URL.revokeObjectURL(imageUrl);
+      }
+    };
+
+    img.onerror = () => {
+      setIsLoading(false);
       Swal.fire({
         title: '❌ Error',
-        text: 'Could not decode barcode',
-        icon: 'error',
-        customClass: {
-          popup: 'rounded-xl'
-        }
+        text: 'Failed to load image',
+        icon: 'error'
       });
-      setStatusMessage('Could not decode barcode.');
-    } finally {
-      setIsLoading(false);
-      URL.revokeObjectURL(imageUrl);
-    }
+    };
   };
 
   const handleManualSubmit = async (e) => {
@@ -152,7 +179,7 @@ const GoatCheckinCheckout = () => {
       });
       return;
     }
-    
+
     setScannedId(manualId.trim());
     await showConfirmationDialog(manualId.trim());
   };

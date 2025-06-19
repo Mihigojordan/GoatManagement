@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import GoatRegistrationService from "../Services/GoatManagement";
+
 
 const GoatStatsCard = () => {
   const [stats, setStats] = useState({
@@ -11,34 +13,27 @@ const GoatStatsCard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('https://api.abyride.com/goats/counts');
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch goat statistics');
-        }
-        
-        const data = await response.json();
-        setStats(data);
-        setError(null);
-      } catch (err) {
-        setError(err.message);
-        console.error('Error fetching goat stats:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+useEffect(() => {
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const data = await GoatRegistrationService.getGoatCounts(); // ✅ This already returns .data
+      setStats(data); // ✅ use data directly
+      setError(null);
+    } catch (err) {
+      setError(err.message || 'Error fetching goat statistics');
+      console.error('Error fetching goat stats:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchStats();
-    
-    // Optional: Set up auto-refresh every 30 seconds
-    const interval = setInterval(fetchStats, 30000);
-    
-    return () => clearInterval(interval);
-  }, []);
+  fetchStats();
+  const interval = setInterval(fetchStats, 30000);
+  return () => clearInterval(interval);
+}, []);
+
+
 
   if (loading) {
     return (
