@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { X, Heart, Eye, Calendar, Camera, User, Edit, Trash2,UploadCloud } from "lucide-react";
 import { Link } from "react-router-dom";
 import GoatRegistrationService from "../Services/GoatManagement";
+import VConsole from 'vconsole';
+new VConsole(); // This adds a floating debug icon on your iPhone screen
+
 
 const GoatRegistrationManagement = () => {
   const [registrations, setRegistrations] = useState([]);
@@ -61,47 +64,56 @@ const GoatRegistrationManagement = () => {
     }
   };
 
-// Enhanced handleImageUpload function with debugging:
 const handleImageUpload = (e) => {
   const file = e.target.files[0];
-  console.log('File selected:', file); // Debug log
-  
-  if (file) {
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Please select a valid image file');
-      return;
-    }
-    
-    // Validate file size (optional - adjust as needed)
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      setError('Image file too large. Please select an image under 5MB');
-      return;
-    }
-    
-    console.log('File details:', {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      lastModified: file.lastModified
-    });
-    
-    setImageFile(file); // Store actual file for backend
-    setError(''); // Clear any previous errors
-    
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      console.log('FileReader completed successfully');
-      setImagePreview(reader.result); // Set preview
-    };
-    reader.onerror = (error) => {
-      console.error('FileReader error:', error);
-      setError('Failed to read image file');
-    };
-    reader.readAsDataURL(file);
-  } else {
-    console.log('No file selected');
+  console.log('📸 File selected:', file);
+
+  if (!file) {
+    alert('❌ No file selected');
+    return;
   }
+
+  alert(`📂 File name: ${file.name}\nType: ${file.type}\nSize: ${file.size} bytes`);
+
+  if (!file.type.startsWith('image/')) {
+    const errMsg = '❌ Not an image file';
+    alert(errMsg);
+    setError(errMsg);
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    const errMsg = '❌ File too large (max 5MB)';
+    alert(errMsg);
+    setError(errMsg);
+    return;
+  }
+
+  console.log('✅ Valid image file:', {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+    lastModified: file.lastModified
+  });
+
+  alert('✅ Image accepted. Preparing preview...');
+
+  setImageFile(file); // Store the image file for upload
+  setError('');
+
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    console.log('📷 FileReader result:', reader.result);
+    setImagePreview(reader.result);
+    alert('✅ Image preview ready.');
+  };
+  reader.onerror = (error) => {
+    console.error('❌ FileReader failed:', error);
+    alert('❌ Failed to readfile');
+    setError('Failed to read image file');
+  };
+
+  reader.readAsDataURL(file);
 };
 
   const handleShowModal = (registration = null) => {

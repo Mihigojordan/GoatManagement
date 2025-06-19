@@ -20,7 +20,7 @@ async function bootstrap() {
   // Enable CORS for dev and prod
   const allowedOrigins = [
     'http://localhost:5173',       // Development
-    'https://api.abyride.com',      // Production
+    'https://goat.abyride.com',      // Production
   ];
 
   app.enableCors({

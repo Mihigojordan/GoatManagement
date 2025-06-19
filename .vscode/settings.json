@@ -3,5 +3,6 @@
         "bwipjs",
         "plkmquj",
         "VITE"
-    ]
+    ],
+    "expoFontLoader.appTsxPath": "."
 }
