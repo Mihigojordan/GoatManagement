@@ -88,7 +88,7 @@ export class AdminService {
 
       const token = this.jwtService.sign({ id: admin.id, role: 'admin' });
 
-   res.cookie('token', token, {
+   res.cookie('adminAccessToken', token, {
   httpOnly: true,
   secure: true, // <-- Required for SameSite=None in production
   sameSite: 'none', // <-- Required for cross-origin cookies
