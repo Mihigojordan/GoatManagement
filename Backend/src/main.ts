@@ -20,7 +20,9 @@ async function bootstrap() {
   // Enable CORS for dev and prod
   const allowedOrigins = [
     'http://localhost:5173',       // Development
-    'https://shimwefarm.com',      // Production
+    'https://ishimwefarm.com',  
+    
+    'https://www.ishimwefarm.com', // <--- add if neede    // Production
   ];
 
   app.enableCors({
