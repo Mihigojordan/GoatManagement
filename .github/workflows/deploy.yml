@@ -32,19 +32,7 @@ jobs:
           cd Backend
           npm run build
 
-      # 5. Install frontend dependencies
-      - name: Install Frontend Dependencies
-        run: |
-          cd frontend
-          npm ci
-
-      # 6. Build frontend project
-      - name: Build Frontend
-        run: |
-          cd frontend
-          npm run build
-
-      # 7. Set up SSH key and known_hosts
+      # 5. Set up SSH key and known_hosts
       - name: Set up SSH key and known_hosts
         run: |
           mkdir -p ~/.ssh
@@ -52,21 +40,20 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H 162.0.224.102 >> ~/.ssh/known_hosts
 
-      # 8. Start ssh-agent and add key
+      # 6. Start ssh-agent and add key
       - name: Start ssh-agent and add key
         run: |
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
 
-      # 9. Clean old backend and frontend on server
-      - name: Clean old backend and frontend on server
+      # 7. Clean old backend on server
+      - name: Clean old backend on server
         run: |
           ssh -o StrictHostKeyChecking=no root@162.0.224.102 "
-            rm -rf /var/www/goatmanagementbackend &&
-            rm -rf /var/www/goatmanagementfrontend
+            rm -rf /var/www/goatmanagementbackend
           "
 
-      # 10. Upload backend files to the server
+      # 8. Upload backend files to the server
       - name: Upload Backend to Server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -75,13 +62,3 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "Backend/**"
           target: "/var/www/goatmanagementbackend"
-
-      # 11. Upload frontend build to the server
-      - name: Upload Frontend to Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: 162.0.224.102
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "frontend/dist/**" # or "Frontend/build/**" based on your framework
-          target: "/var/www/goatmanagementfrontend"
