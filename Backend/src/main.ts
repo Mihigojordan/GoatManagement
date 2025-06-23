@@ -21,7 +21,6 @@ async function bootstrap() {
   const allowedOrigins = [
     'http://localhost:5173',       // Development
     'https://ishimwefarm.com',  
-    
     'https://www.ishimwefarm.com', // <--- add if neede    // Production
   ];
 
