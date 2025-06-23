@@ -92,7 +92,7 @@ export class AdminService {
          httpOnly: true,
         sameSite: 'none',
         maxAge: 1000 * 60 * 60 * 24 * 7,
-        secure: process.env.NODE_ENV === 'production',
+        secure: true,
       });
 
 
@@ -108,7 +108,7 @@ export class AdminService {
        res.clearCookie('adminAccessToken', {
         httpOnly: true,
         sameSite: 'none',
-        secure: process.env.NODE_ENV === 'production',
+        secure: true,
       });
       return { message: 'Admin logged out successfully' };
     } catch (error) {
