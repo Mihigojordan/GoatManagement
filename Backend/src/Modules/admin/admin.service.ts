@@ -92,7 +92,8 @@ export class AdminService {
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-        sameSite: 'lax', // Adjust based on your needs
+        sameSite: 'none', // Adjust based on your needs
+        domain:  '.abyride.com'
       });
 
 
@@ -106,9 +107,10 @@ export class AdminService {
   async logout(res: Response) {
     try {
        res.clearCookie('adminAccessToken', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-        sameSite: 'lax', // Adjust based on your needs
+     httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 day
+        sameSite: 'none', // Adjust based on your needs
+        domain:  '.abyride.com'
 
       });
       return { message: 'Admin logged out successfully' };
