@@ -105,12 +105,11 @@ export class AdminService {
 
   async logout(res: Response) {
     try {
-      res.clearCookie('adminAccessToken', {
-   res.cookie('adminAccessToken', token, {
+       res.clearCookie('adminAccessToken', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
         sameSite: 'lax', // Adjust based on your needs
-      });
+
       });
       return { message: 'Admin logged out successfully' };
     } catch (error) {
