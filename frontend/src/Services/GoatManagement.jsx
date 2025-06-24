@@ -105,6 +105,11 @@ async registerGoat(goatData) {
       throw error;
     }
   }
+  // GoatManagement.js
+async function getGoatStatus(goatId) {
+  return api.get(`/goats/status/${goatId}`); // endpoint should return something like { status: 'in' | 'out' }
+}
+
 
   // Additional goat-specific methods
   async getGoatBreeds() {
