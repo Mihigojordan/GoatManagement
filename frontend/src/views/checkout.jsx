@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import GoatRegistrationService from "../Services/GoatManagement";
 import BarcodeScannerComponent from "react-qr-barcode-scanner";
 
-
 import { 
   Camera, 
   Upload, 
@@ -29,30 +28,51 @@ const GoatCheckinCheckout = () => {
   const navigate = useNavigate();
 
   const showConfirmationDialog = async (goatId) => {
-    const result = await Swal.fire({
-      title: '🐐 Confirm Action',
-      html: `
-        <div class="text-center">
-          <div class="text-2xl mb-2">🎯</div>
-          <p class="text-sm mb-1">Goat ID: <strong>${goatId}</strong></p>
-          <p class="text-sm">Check this goat ${scannedId ? 'out' : 'in'}?</p>
-        </div>
-      `,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#10b981',
-      cancelButtonColor: '#ef4444',
-      confirmButtonText: '✅ Yes',
-      cancelButtonText: '❌ No',
-      customClass: {
-        popup: 'rounded-xl text-sm',
-        confirmButton: 'rounded-lg px-4 py-1 text-sm',
-        cancelButton: 'rounded-lg px-4 py-1 text-sm'
-      }
-    });
+    try {
+      // First check goat status from backend
+      setIsLoading(true);
+      const goatInfo = await GoatRegistrationService.getGoatInfo(goatId);
+      setIsLoading(false);
+      
+      const currentStatus = goatInfo.data.status; // Get status from backend response
+      const action = currentStatus === 'in' ? 'out' : 'in'; // Determine opposite action
 
-    if (result.isConfirmed) {
-      await handleUpdateStatus(goatId);
+      const result = await Swal.fire({
+        title: '🐐 Confirm Action',
+        html: `
+          <div class="text-center">
+            <div class="text-2xl mb-2">🎯</div>
+            <p class="text-sm mb-1">Goat ID: <strong>${goatId}</strong></p>
+            <p class="text-sm">Current Status: <strong>${currentStatus.toUpperCase()}</strong></p>
+            <p class="text-sm">Check this goat ${action}?</p>
+          </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#ef4444',
+        confirmButtonText: '✅ Yes',
+        cancelButtonText: '❌ No',
+        customClass: {
+          popup: 'rounded-xl text-sm',
+          confirmButton: 'rounded-lg px-4 py-1 text-sm',
+          cancelButton: 'rounded-lg px-4 py-1 text-sm'
+        }
+      });
+
+      if (result.isConfirmed) {
+        await handleUpdateStatus(goatId);
+      }
+    } catch (error) {
+      setIsLoading(false);
+      Swal.fire({
+        title: '❌ Error',
+        text: error.response?.data?.message || 'Failed to get goat information',
+        icon: 'error',
+        customClass: {
+          popup: 'rounded-xl'
+        }
+      });
     }
   };
 
@@ -67,6 +87,7 @@ const GoatCheckinCheckout = () => {
           <div class="text-center">
             <div class="text-3xl mb-2">✅</div>
             <p class="text-sm">${result.message}</p>
+            <p class="text-xs mt-1">New Status: ${result.data.status.toUpperCase()}</p>
           </div>
         `,
         icon: 'success',
@@ -121,7 +142,6 @@ const GoatCheckinCheckout = () => {
     img.onload = async () => {
       const codeReader = new BrowserMultiFormatReader();
 
-      // Expand hints to multiple barcode formats to improve decoding success
       const hints = new Map();
       hints.set(DecodeHintType.POSSIBLE_FORMATS, [
         BarcodeFormat.EAN_8,
