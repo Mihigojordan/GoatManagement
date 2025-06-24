@@ -99,5 +99,20 @@ async getGoatById(@Param('id') id: string) {
   return goat;
 }
 
+  // Inside your GoatController
+@Get('status/:id')
+async getGoatStatus(@Param('id') id: string) {
+  const goat = await this.goatService.getGoatById(id);
+  if (!goat) {
+    throw new NotFoundException(`Goat with ID ${id} not found`);
+  }
+
+  // assuming goat.status is a boolean or string like 'in'/'out'
+  const status = goat.isCheckedIn ? 'in' : 'out'; // adapt field name
+
+  return { status };
+}
+
+
   
 }
