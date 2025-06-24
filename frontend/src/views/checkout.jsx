@@ -28,53 +28,54 @@ const GoatCheckinCheckout = () => {
   const navigate = useNavigate();
 
   const showConfirmationDialog = async (goatId) => {
-    try {
-      // First check goat status from backend
-      setIsLoading(true);
-      const goatInfo = await GoatRegistrationService.getGoatStatus(goatId);
-      setIsLoading(false);
-      
-      const currentStatus = goatInfo.data.status; // Get status from backend response
-      const action = currentStatus === 'in' ? 'out' : 'in'; // Determine opposite action
+  try {
+    // First check goat status from backend
+    setIsLoading(true);
+    const response = await axios.get(`https://rent.abyride.com/goats/${goatId}/status`);
+    const goatInfo = response.data;
+    setIsLoading(false);
+    
+    const currentStatus = goatInfo.status; // Get status from backend response
+    const action = currentStatus === 'in' ? 'out' : 'in'; // Determine opposite action
 
-      const result = await Swal.fire({
-        title: '🐐 Confirm Action',
-        html: `
-          <div class="text-center">
-            <div class="text-2xl mb-2">🎯</div>
-            <p class="text-sm mb-1">Goat ID: <strong>${goatId}</strong></p>
-            <p class="text-sm">Current Status: <strong>${currentStatus.toUpperCase()}</strong></p>
-            <p class="text-sm">Check this goat ${action}?</p>
-          </div>
-        `,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#10b981',
-        cancelButtonColor: '#ef4444',
-        confirmButtonText: '✅ Yes',
-        cancelButtonText: '❌ No',
-        customClass: {
-          popup: 'rounded-xl text-sm',
-          confirmButton: 'rounded-lg px-4 py-1 text-sm',
-          cancelButton: 'rounded-lg px-4 py-1 text-sm'
-        }
-      });
-
-      if (result.isConfirmed) {
-        await handleUpdateStatus(goatId);
+    const result = await Swal.fire({
+      title: '🐐 Confirm Action',
+      html: `
+        <div class="text-center">
+          <div class="text-2xl mb-2">🎯</div>
+          <p class="text-sm mb-1">Goat ID: <strong>${goatId}</strong></p>
+          <p class="text-sm">Current Status: <strong>${currentStatus.toUpperCase()}</strong></p>
+          <p class="text-sm">Check this goat ${action}?</p>
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: '✅ Yes',
+      cancelButtonText: '❌ No',
+      customClass: {
+        popup: 'rounded-xl text-sm',
+        confirmButton: 'rounded-lg px-4 py-1 text-sm',
+        cancelButton: 'rounded-lg px-4 py-1 text-sm'
       }
-    } catch (error) {
-      setIsLoading(false);
-      Swal.fire({
-        title: '❌ Error',
-        text: error.response?.data?.message || 'Failed to get goat information',
-        icon: 'error',
-        customClass: {
-          popup: 'rounded-xl'
-        }
-      });
+    });
+
+    if (result.isConfirmed) {
+      await handleUpdateStatus(goatId);
     }
-  };
+  } catch (error) {
+    setIsLoading(false);
+    Swal.fire({
+      title: '❌ Error',
+      text: error.response?.data?.message || 'Failed to get goat information',
+      icon: 'error',
+      customClass: {
+        popup: 'rounded-xl'
+      }
+    });
+  }
+};
 
   const handleUpdateStatus = async (goatId) => {
     setIsLoading(true);
