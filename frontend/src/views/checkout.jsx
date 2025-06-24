@@ -39,81 +39,47 @@ const GoatCheckinCheckout = () => {
     }
   };
 
-  const showConfirmationDialog = async (goatId) => {
-    setIsLoading(true);
-    
-    try {
-      const currentStatus = await getGoatStatus(goatId);
-      
-      if (!currentStatus) {
-        Swal.fire({
-          title: '❌ Error!',
-          html: `
-            <div class="text-center">
-              <div class="text-3xl mb-2">⚠️</div>
-              <p class="text-sm">Could not find goat with ID: <strong>${goatId}</strong></p>
-              <p class="text-xs text-gray-500 mt-1">Please verify the ID and try again</p>
-            </div>
-          `,
-          icon: 'error',
-          customClass: {
-            popup: 'rounded-xl'
-          }
-        });
-        return;
+const showConfirmationDialog = async (goatId) => {
+  try {
+    const { data } = await GoatRegistrationService.getGoatStatus(goatId);
+    const isCurrentlyIn = data.status === 'in';
+
+    const result = await Swal.fire({
+      title: '🐐 Confirm Action',
+      html: `
+        <div class="text-center">
+          <div class="text-2xl mb-2">🎯</div>
+          <p class="text-sm mb-1">Goat ID: <strong>${goatId}</strong></p>
+          <p class="text-sm">This goat is currently <strong>${isCurrentlyIn ? 'CHECKED IN' : 'CHECKED OUT'}</strong>.<br>
+          Do you want to check it ${isCurrentlyIn ? 'OUT' : 'IN'}?</p>
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: `✅ Yes, check ${isCurrentlyIn ? 'out' : 'in'}`,
+      cancelButtonText: '❌ No',
+      customClass: {
+        popup: 'rounded-xl text-sm',
+        confirmButton: 'rounded-lg px-4 py-1 text-sm',
+        cancelButton: 'rounded-lg px-4 py-1 text-sm'
       }
+    });
 
-      const isCheckedIn = currentStatus === 'checked_in';
-      const actionText = isCheckedIn ? 'Check Out' : 'Check In';
-      const statusEmoji = isCheckedIn ? '🏠' : '🚪';
-      const actionEmoji = isCheckedIn ? '🚪' : '🏠';
-      const statusText = isCheckedIn ? 'checked in' : 'checked out';
-      const actionColor = isCheckedIn ? '#ef4444' : '#10b981';
-
-      const result = await Swal.fire({
-        title: '🐐 Goat Status',
-        html: `
-          <div class="text-center">
-            <div class="text-3xl mb-3">${statusEmoji}</div>
-            <p class="text-sm mb-2">Goat ID: <strong>${goatId}</strong></p>
-            <div class="bg-gray-100 rounded-lg p-3 mb-3">
-              <p class="text-sm font-medium">Current Status: <span class="text-blue-600">${statusText}</span></p>
-            </div>
-            <p class="text-sm mb-2">
-              ${actionEmoji} Do you want to <strong>${actionText.toLowerCase()}</strong> this goat?
-            </p>
-          </div>
-        `,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: actionColor,
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: `✅ ${actionText}`,
-        cancelButtonText: '❌ Cancel',
-        customClass: {
-          popup: 'rounded-xl text-sm',
-          confirmButton: 'rounded-lg px-4 py-2 text-sm font-medium',
-          cancelButton: 'rounded-lg px-4 py-2 text-sm font-medium'
-        }
-      });
-
-      if (result.isConfirmed) {
-        await handleUpdateStatus(goatId, isCheckedIn ? 'check_out' : 'check_in');
-      }
-    } catch (error) {
-      console.error('Error in confirmation dialog:', error);
-      Swal.fire({
-        title: '❌ Error!',
-        text: 'Failed to fetch goat status. Please try again.',
-        icon: 'error',
-        customClass: {
-          popup: 'rounded-xl'
-        }
-      });
-    } finally {
-      setIsLoading(false);
+    if (result.isConfirmed) {
+      await handleUpdateStatus(goatId);
     }
-  };
+  } catch (err) {
+    console.error('Error fetching goat status:', err);
+    Swal.fire({
+      title: '❌ Error',
+      text: 'Could not retrieve goat status.',
+      icon: 'error',
+    });
+  }
+};
+
 
   const handleUpdateStatus = async (goatId, action) => {
     setIsLoading(true);
