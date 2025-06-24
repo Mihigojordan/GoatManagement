@@ -69,16 +69,15 @@ if (!currentStatus) {
 let normalizedStatus = currentStatus.toLowerCase().trim();
 let action = null;
 
-if (['in', 'checkin'].includes(normalizedStatus)) {
+if (['in', 'checkin', 'checkedin'].includes(normalizedStatus)) {
   action = 'out';
-} else if (['out', 'checkout'].includes(normalizedStatus)) {
+} else if (['out', 'checkout', 'checkedout'].includes(normalizedStatus)) {
   action = 'in';
 } else {
   throw new Error(`Unrecognized status value: '${currentStatus}'`);
 }
 
-
-    const result = await Swal.fire({
+const result = await Swal.fire({
       title: '🐐 Confirm Action',
       html: `
         <div class="text-center">
