@@ -62,15 +62,18 @@ const showConfirmationDialog = async (goatId) => {
       currentStatus = goatInfo.data.status;
     }
 
+    
 if (!currentStatus) {
   throw new Error(`Goat status field not found. Available fields: ${Object.keys(goatInfo).join(', ')}`);
 }
+
+const status = currentStatus.toLowerCase();
 let action = null;
 
-if (currentStatus === 'checkedin') {
-  action = 'out';
-} else if (currentStatus === 'checkedout') {
+if (status === 'checkedin') {
   action = 'in';
+} else if (status === 'checkedout') {
+  action = 'out';
 } else {
   throw new Error(`Unrecognized status: ${currentStatus}`);
 }
