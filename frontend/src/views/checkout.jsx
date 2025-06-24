@@ -62,11 +62,21 @@ const showConfirmationDialog = async (goatId) => {
       currentStatus = goatInfo.data.status;
     }
 
-    if (!currentStatus) {
-      throw new Error(`Goat status field not found. Available fields: ${Object.keys(goatInfo).join(', ')}`);
-    }
+if (!currentStatus) {
+  throw new Error(`Goat status field not found. Available fields: ${Object.keys(goatInfo).join(', ')}`);
+}
 
-    const action = currentStatus === 'in' ? 'out' : 'in';
+let normalizedStatus = currentStatus.toLowerCase().trim();
+let action = null;
+
+if (['in', 'checkin'].includes(normalizedStatus)) {
+  action = 'out';
+} else if (['out', 'checkout'].includes(normalizedStatus)) {
+  action = 'in';
+} else {
+  throw new Error(`Unrecognized status value: '${currentStatus}'`);
+}
+
 
     const result = await Swal.fire({
       title: '🐐 Confirm Action',
