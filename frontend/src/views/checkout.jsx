@@ -30,82 +30,26 @@ const GoatCheckinCheckout = () => {
 
 const showConfirmationDialog = async (goatId) => {
   try {
-    // First check goat status from backend
     setIsLoading(true);
     console.log('=== STARTING GOAT STATUS CHECK ===');
     console.log(`Fetching goat status for ID: ${goatId}`);
-    console.log(`Request URL: https://rent.abyride.com/goats/${goatId}`);
     console.log(`Request timestamp: ${new Date().toISOString()}`);
-    
-    const response = await axios.get(`https://rent.abyride.com/goats/${goatId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        // Add any other required headers here
-      },
-      timeout: 10000, // 10 second timeout
-    }).catch(error => {
-      console.error('=== AXIOS REQUEST FAILED ===');
-      console.error('Error message:', error.message);
-      console.error('Error code:', error.code);
-      console.error('Request config:', {
-        url: error.config?.url,
-        method: error.config?.method,
-        headers: error.config?.headers,
-        timeout: error.config?.timeout
-      });
-      
-      if (error.response) {
-        // Server responded with error status
-        console.error('Response status:', error.response.status);
-        console.error('Response statusText:', error.response.statusText);
-        console.error('Response headers:', error.response.headers);
-        console.error('Response data:', error.response.data);
-        console.error('Response data type:', typeof error.response.data);
-      } else if (error.request) {
-        // Request was made but no response received
-        console.error('No response received');
-        console.error('Request details:', error.request);
-      } else {
-        // Something else happened
-        console.error('Request setup error:', error.message);
-      }
-      
-      throw error;
-    });
 
-    console.log('=== RESPONSE RECEIVED ===');
-    console.log('Response status:', response.status);
-    console.log('Response statusText:', response.statusText);
-    console.log('Response headers:', response.headers);
-    console.log('Raw response data:', response.data);
-    console.log('Response data type:', typeof response.data);
-    console.log('Response data keys:', Object.keys(response.data || {}));
-    
-    const goatInfo = response.data;
+    // ✅ Use the service method instead of hardcoded axios.get
+    const goatInfo = await GoatRegistrationService.getGoatById(goatId);
+
+    console.log('=== RESPONSE RECEIVED FROM SERVICE ===');
+    console.log('Goat info:', goatInfo);
+
     setIsLoading(false);
-    
-    // Enhanced validation with detailed logging
-    console.log('=== VALIDATING RESPONSE DATA ===');
-    console.log('goatInfo exists:', !!goatInfo);
-    console.log('goatInfo type:', typeof goatInfo);
-    console.log('goatInfo content:', JSON.stringify(goatInfo, null, 2));
-    
+
     if (!goatInfo) {
       console.error('=== VALIDATION FAILED: goatInfo is null/undefined ===');
       throw new Error('No goat information received from server');
     }
-    
+
     // Check for different possible status field names
-    console.log('Checking for status field...');
-    console.log('goatInfo.status:', goatInfo.status);
-    console.log('goatInfo.Status:', goatInfo.Status);
-    console.log('goatInfo.currentStatus:', goatInfo.currentStatus);
-    console.log('goatInfo.state:', goatInfo.state);
-    console.log('goatInfo.data?.status:', goatInfo.data?.status);
-    
     let currentStatus = null;
-    
-    // Try different possible status field names/locations
     if (goatInfo.status) {
       currentStatus = goatInfo.status;
     } else if (goatInfo.Status) {
@@ -117,20 +61,13 @@ const showConfirmationDialog = async (goatId) => {
     } else if (goatInfo.data?.status) {
       currentStatus = goatInfo.data.status;
     }
-    
+
     if (!currentStatus) {
-      console.error('=== VALIDATION FAILED: status field not found ===');
-      console.error('Available fields in goatInfo:', Object.keys(goatInfo));
-      console.error('Full goatInfo structure:', JSON.stringify(goatInfo, null, 2));
       throw new Error(`Goat status field not found. Available fields: ${Object.keys(goatInfo).join(', ')}`);
     }
-    
-    console.log('=== VALIDATION PASSED ===');
-    console.log(`Current status for goat ${goatId}: ${currentStatus}`);
-    
+
     const action = currentStatus === 'in' ? 'out' : 'in';
-    console.log(`Proposed action: ${action}`);
-    
+
     const result = await Swal.fire({
       title: '🐐 Confirm Action',
       html: `
@@ -160,20 +97,14 @@ const showConfirmationDialog = async (goatId) => {
     } else {
       console.log('User cancelled action');
     }
-    
+
   } catch (error) {
     setIsLoading(false);
-    console.error('=== ERROR IN showConfirmationDialog ===');
-    console.error('Error type:', error.constructor.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('GoatId:', goatId);
-    console.error('Timestamp:', new Date().toISOString());
-    
-    // Determine error type and show appropriate message
+    console.error('=== ERROR IN showConfirmationDialog ===', error);
+
     let errorMessage = 'Failed to get goat information';
     let errorDetails = '';
-    
+
     if (error.code === 'ENOTFOUND') {
       errorMessage = 'Network error: Cannot reach server';
       errorDetails = 'Check your internet connection';
@@ -183,7 +114,7 @@ const showConfirmationDialog = async (goatId) => {
     } else if (error.response) {
       const status = error.response.status;
       const data = error.response.data;
-      
+
       if (status === 404) {
         errorMessage = `Goat ID ${goatId} not found`;
         errorDetails = 'Please check the goat ID and try again';
@@ -201,12 +132,8 @@ const showConfirmationDialog = async (goatId) => {
       errorMessage = 'Invalid server response';
       errorDetails = error.message;
     }
-    
-    console.error('=== SHOWING ERROR TO USER ===');
-    console.error('Error message:', errorMessage);
-    console.error('Error details:', errorDetails);
-    
-    Swal.fire({
+
+    await Swal.fire({
       title: '❌ Error',
       html: `
         <div class="text-center">
