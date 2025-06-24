@@ -106,6 +106,17 @@ async registerGoat(goatData) {
     }
   }
 
+  // get goat status from backend by id
+async getGoatStatus(goatId) {
+  try {
+    const response = await this.api.get(`/goats/status/${goatId}`);
+    return response.data;  // { status: 'checkedin' | 'checkout' }
+  } catch (error) {
+    console.error('Get goat status error:', error);
+    throw error;
+  }
+}
+
   // Additional goat-specific methods
   async getGoatBreeds() {
     try {

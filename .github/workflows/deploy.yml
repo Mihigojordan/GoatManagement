@@ -46,11 +46,14 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
 
-      # 7. Clean old backend on server
+      # 7. Clean old backend on server (with safe fallback)
       - name: Clean old backend on server
         run: |
           ssh -o StrictHostKeyChecking=no root@162.0.224.102 "
-            rm -rf /var/www/goatmanagementbackend
+            if [ -d /var/www/goatmanagementbackend ]; then
+              chmod -R u+w /var/www/goatmanagementbackend || true
+              rm -rf /var/www/goatmanagementbackend
+            fi
           "
 
       # 8. Upload backend files to the server
@@ -62,3 +65,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "Backend/**"
           target: "/var/www/goatmanagementbackend"
+
