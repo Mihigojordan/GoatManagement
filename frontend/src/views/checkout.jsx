@@ -85,8 +85,7 @@ const result = await Swal.fire({
         <div class="text-center">
           <div class="text-2xl mb-2">🎯</div>
           <p class="text-sm mb-1">Goat ID: <strong>${goatId}</strong></p>
-          <p class="text-sm">Current Status: <strong>${currentStatus.toUpperCase()}</strong></p>
-          <p class="text-sm">Check this goat ${action}?</p>
+<p className="text-sm">This goat is currently <strong>${currentStatus.toUpperCase()}</strong>. Do you want to change it?</p>
         </div>
       `,
       icon: 'question',
