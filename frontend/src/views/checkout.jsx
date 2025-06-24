@@ -27,17 +27,41 @@ const GoatCheckinCheckout = () => {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
-  const showConfirmationDialog = async (goatId) => {
+const showConfirmationDialog = async (goatId) => {
   try {
     // First check goat status from backend
     setIsLoading(true);
-    const response = await axios.get(`https://rent.abyride.com/goats/${goatId}/status`);
+    console.log(`Fetching goat status for ID: ${goatId}`); // Log the ID being fetched
+    
+    const response = await axios.get(`https://rent.abyride.com/goats/${goatId}/status`, {
+      headers: {
+        'Content-Type': 'application/json',
+        // Add any other required headers here
+      }
+    }).catch(error => {
+      console.error('Axios request failed:', {
+        error: error.message,
+        config: error.config,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      throw error;
+    });
+
+    console.log('Goat status response:', response.data); // Log full response
+    
     const goatInfo = response.data;
     setIsLoading(false);
     
-    const currentStatus = goatInfo.status; // Get status from backend response
-    const action = currentStatus === 'in' ? 'out' : 'in'; // Determine opposite action
-
+    if (!goatInfo || !goatInfo.status) {
+      console.error('Invalid response structure:', goatInfo);
+      throw new Error('Invalid goat status response');
+    }
+    
+    const currentStatus = goatInfo.status;
+    console.log(`Current status for goat ${goatId}: ${currentStatus}`); // Log the status
+    
+    const action = currentStatus === 'in' ? 'out' : 'in';
     const result = await Swal.fire({
       title: '🐐 Confirm Action',
       html: `
@@ -66,6 +90,13 @@ const GoatCheckinCheckout = () => {
     }
   } catch (error) {
     setIsLoading(false);
+    console.error('Error in showConfirmationDialog:', {
+      error: error.message,
+      stack: error.stack,
+      goatId: goatId,
+      timestamp: new Date().toISOString(),
+    });
+    
     Swal.fire({
       title: '❌ Error',
       text: error.response?.data?.message || 'Failed to get goat information',
@@ -272,7 +303,7 @@ const GoatCheckinCheckout = () => {
               }`}
             >
               <Type size={16} />
-              Manual
+              Manually
             </button>
           </div>
 
