@@ -66,16 +66,17 @@ if (!currentStatus) {
   throw new Error(`Goat status field not found. Available fields: ${Object.keys(goatInfo).join(', ')}`);
 }
 
-let normalizedStatus = currentStatus.toLowerCase().trim();
+const status = currentStatus.toLowerCase();
 let action = null;
 
-if (['in', 'checkin', 'checkedin'].includes(normalizedStatus)) {
+if (status === 'checkedin') {
   action = 'out';
-} else if (['out', 'checkout', 'checkedout'].includes(normalizedStatus)) {
+} else if (status === 'checkedout') {
   action = 'in';
 } else {
-  throw new Error(`Unrecognized status value: '${currentStatus}'`);
+  throw new Error(`Unrecognized status: ${currentStatus}`);
 }
+
 
 const result = await Swal.fire({
       title: '🐐 Confirm Action',
