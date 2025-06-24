@@ -28,26 +28,21 @@ const GoatCheckinCheckout = () => {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
-const showConfirmationDialog = async (goatId) => {
-  try {
-    const { data } = await GoatRegistrationService.getGoatStatus(goatId);
-    const isCurrentlyIn = data.status === 'in';
-
+  const showConfirmationDialog = async (goatId) => {
     const result = await Swal.fire({
       title: '🐐 Confirm Action',
       html: `
         <div class="text-center">
           <div class="text-2xl mb-2">🎯</div>
           <p class="text-sm mb-1">Goat ID: <strong>${goatId}</strong></p>
-          <p class="text-sm">This goat is currently <strong>${isCurrentlyIn ? 'CHECKED IN' : 'CHECKED OUT'}</strong>.<br>
-          Do you want to check it ${isCurrentlyIn ? 'OUT' : 'IN'}?</p>
+          <p class="text-sm">Check this goat ${scannedId ? 'out' : 'in'}?</p>
         </div>
       `,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#10b981',
       cancelButtonColor: '#ef4444',
-      confirmButtonText: `✅ Yes, check ${isCurrentlyIn ? 'out' : 'in'}`,
+      confirmButtonText: '✅ Yes',
       cancelButtonText: '❌ No',
       customClass: {
         popup: 'rounded-xl text-sm',
@@ -59,65 +54,59 @@ const showConfirmationDialog = async (goatId) => {
     if (result.isConfirmed) {
       await handleUpdateStatus(goatId);
     }
-  } catch (err) {
-    console.error('Error fetching goat status:', err);
-    Swal.fire({
-      title: '❌ Error',
-      text: 'Could not retrieve goat status.',
-      icon: 'error',
-    });
-  }
-};
+  };
 
+  const handleUpdateStatus = async (goatId) => {
+    setIsLoading(true);
+    try {
+      const result = await GoatRegistrationService.scanGoat(goatId);
+      
+      await Swal.fire({
+        title: '🎉 Success!',
+        html: `
+          <div class="text-center">
+            <div class="text-3xl mb-2">✅</div>
+            <p class="text-sm">${result.message}</p>
+          </div>
+        `,
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        customClass: {
+          popup: 'rounded-xl'
+        }
+      });
 
-const handleUpdateStatus = async (goatId) => {
-  setIsLoading(true);
-  try {
-    const result = await GoatRegistrationService.scanGoat(goatId);
-    
-    await Swal.fire({
-      title: '🎉 Success!',
-      html: `
-        <div class="text-center">
-          <div class="text-3xl mb-2">✅</div>
-          <p class="text-sm">${result.message}</p>
-        </div>
-      `,
-      icon: 'success',
-      timer: 1500,
-      showConfirmButton: false,
-      customClass: { popup: 'rounded-xl' },
-    });
+      setScannedId('');
+      setManualId('');
 
-    setScannedId('');
-    setManualId('');
+      setTimeout(() => {
+        navigate('/dashboard/manage-goat');
+      }, 1500);
 
-    setTimeout(() => {
-      navigate('/dashboard/manage-goat');
-    }, 1500);
+    } catch (error) {
+      console.error('Error updating goat status:', error);
 
-  } catch (error) {
-    console.error('Error updating goat status:', error);
+      Swal.fire({
+        title: '❌ Error!',
+        html: `
+          <div class="text-center">
+            <div class="text-3xl mb-2">⚠️</div>
+            <p class="text-sm">${error.response?.data?.message || 'Failed to update status'}</p>
+          </div>
+        `,
+        icon: 'error',
+        timer: 2000,
+        customClass: {
+          popup: 'rounded-xl'
+        }
+      });
 
-    Swal.fire({
-      title: '❌ Error!',
-      html: `
-        <div class="text-center">
-          <div class="text-3xl mb-2">⚠️</div>
-          <p class="text-sm">${error.response?.data?.message || 'Failed to update status'}</p>
-        </div>
-      `,
-      icon: 'error',
-      timer: 2000,
-      customClass: { popup: 'rounded-xl' },
-    });
-
-    setStatusMessage('Failed to update status');
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+      setStatusMessage('Failed to update status');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleImageUpload = async (event) => {
     const file = event.target.files?.[0];

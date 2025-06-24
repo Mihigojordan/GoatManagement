@@ -105,6 +105,9 @@ async registerGoat(goatData) {
       throw error;
     }
   }
+  // GoatManagement.js
+
+
 
   // get goat status from backend by id
 async getGoatStatus(goatId) {

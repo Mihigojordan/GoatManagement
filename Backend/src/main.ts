@@ -1,44 +1,69 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
-import * as bodyParser from 'body-parser';
 import { json, urlencoded } from 'express';
-import * as express from 'express';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
+
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Serve barcodes statically
-  app.use('/barcode', express.static(join(__dirname, '..', 'public/barcodes')));
 
+  // Allow large request body size (e.g., for file uploads)
+  app.use(json({ limit: '150mb' }));
+  app.use(urlencoded({ limit: '150mb', extended: true }));
+
+
+  // Cookie support
   app.use(cookieParser());
-  app.use('/webhook', bodyParser.raw({ type: 'application/json' }));
-  app.use(json());
-  app.use(urlencoded({ extended: true }));
 
-  // Enable CORS for dev and prod
-  const allowedOrigins = [
-    'http://localhost:5173',       // Development
-    'https://ishimwefarm.com',  
-    
-    'https://www.ishimwefarm.com', // <--- add if neede    // Production
-  ];
 
-  app.enableCors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
+  // Log incoming requests (optional but useful for debugging)
+  app.use((req, res, next) => {
+    console.log('--- Incoming Request ---');
+    console.log('Origin:', req.headers.origin);
+    console.log('Method:', req.method);
+    console.log('URL:', req.originalUrl);
+    console.log('Headers:', req.headers);
+    next();
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+
+  // Serve uploaded files (e.g., images) from "/uploads"
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads',
+  });
+
+
+  // Allowlist of allowed frontend origins
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'https://ishimwefarm.com',
+    'https://www.ishimwefarm.com',
+  ];
+
+
+  // CORS setup
+app.enableCors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new globalThis.Error(`Not allowed by CORS: ${origin}`));
+    }
+  },
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+});
+
+
+
+  await app.listen(process.env.PORT ?? 5000);
 }
+
+
 bootstrap();
+
+
+

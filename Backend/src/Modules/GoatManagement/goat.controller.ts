@@ -99,5 +99,13 @@ async getGoatById(@Param('id') id: string) {
   return goat;
 }
 
+  // Inside your GoatController
+@Get('status/:id')
+async getGoatStatus(@Param('id') id: string) {
+  return this.goatService.getGoatStatusById(id);
+}
+
+
+
   
 }

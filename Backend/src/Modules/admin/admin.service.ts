@@ -89,10 +89,17 @@ export class AdminService {
       const token = this.jwtService.sign({ id: admin.id, role: 'admin' });
 
    res.cookie('adminAccessToken', token, {
+<<<<<<< HEAD
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
         sameSite: 'lax', // Adjust based on your needs
+=======
+         httpOnly: true,
+        sameSite: 'none',
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+        secure: true,
+>>>>>>> 5fd4546ac508f4fcd41a56dc6c97f4cf2bfc959c
       });
 
 
@@ -105,11 +112,18 @@ export class AdminService {
 
   async logout(res: Response) {
     try {
+<<<<<<< HEAD
       res.clearCookie('adminAccessToken', {
          httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
         sameSite: 'lax', // Adjust based on your needs
 
+=======
+       res.clearCookie('adminAccessToken', {
+        httpOnly: true,
+        sameSite: 'none',
+        secure: true,
+>>>>>>> 5fd4546ac508f4fcd41a56dc6c97f4cf2bfc959c
       });
       return { message: 'Admin logged out successfully' };
     } catch (error) {
