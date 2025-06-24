@@ -33,7 +33,7 @@ const showConfirmationDialog = async (goatId) => {
     setIsLoading(true);
     console.log(`Fetching goat status for ID: ${goatId}`); // Log the ID being fetched
     
-    const response = await axios.get(`https://rent.abyride.com/goats/${goatId}/status`, {
+    const response = await axios.get(`https://rent.abyride.com/goats/status/${goatId}`, {
       headers: {
         'Content-Type': 'application/json',
         // Add any other required headers here
