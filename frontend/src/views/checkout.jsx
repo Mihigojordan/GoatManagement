@@ -31,7 +31,7 @@ const GoatCheckinCheckout = () => {
     try {
       // First check goat status from backend
       setIsLoading(true);
-      const goatInfo = await GoatRegistrationService.getGoatInfo(goatId);
+      const goatInfo = await GoatRegistrationService.getGoatStatus(goatId);
       setIsLoading(false);
       
       const currentStatus = goatInfo.data.status; // Get status from backend response
