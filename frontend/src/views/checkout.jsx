@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import GoatRegistrationService from "../Services/GoatManagement";
 import BarcodeScannerComponent from "react-qr-barcode-scanner";
 
-
 import { 
   Camera, 
   Upload, 
@@ -28,49 +27,115 @@ const GoatCheckinCheckout = () => {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
-  const showConfirmationDialog = async (goatId) => {
-    const result = await Swal.fire({
-      title: '🐐 Confirm Action',
-      html: `
-        <div class="text-center">
-          <div class="text-2xl mb-2">🎯</div>
-          <p class="text-sm mb-1">Goat ID: <strong>${goatId}</strong></p>
-          <p class="text-sm">Check this goat ${scannedId ? 'out' : 'in'}?</p>
-        </div>
-      `,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#10b981',
-      cancelButtonColor: '#ef4444',
-      confirmButtonText: '✅ Yes',
-      cancelButtonText: '❌ No',
-      customClass: {
-        popup: 'rounded-xl text-sm',
-        confirmButton: 'rounded-lg px-4 py-1 text-sm',
-        cancelButton: 'rounded-lg px-4 py-1 text-sm'
-      }
-    });
-
-    if (result.isConfirmed) {
-      await handleUpdateStatus(goatId);
+  // Function to get goat status before showing confirmation
+  const getGoatStatus = async (goatId) => {
+    try {
+      // Assuming your service has a method to get goat details
+      const goatDetails = await GoatRegistrationService.getGoatById(goatId);
+      return goatDetails.status; // Assuming status is 'checked_in' or 'checked_out'
+    } catch (error) {
+      console.error('Error fetching goat status:', error);
+      return null;
     }
   };
 
-  const handleUpdateStatus = async (goatId) => {
+  const showConfirmationDialog = async (goatId) => {
+    setIsLoading(true);
+    
+    try {
+      const currentStatus = await getGoatStatus(goatId);
+      
+      if (!currentStatus) {
+        Swal.fire({
+          title: '❌ Error!',
+          html: `
+            <div class="text-center">
+              <div class="text-3xl mb-2">⚠️</div>
+              <p class="text-sm">Could not find goat with ID: <strong>${goatId}</strong></p>
+              <p class="text-xs text-gray-500 mt-1">Please verify the ID and try again</p>
+            </div>
+          `,
+          icon: 'error',
+          customClass: {
+            popup: 'rounded-xl'
+          }
+        });
+        return;
+      }
+
+      const isCheckedIn = currentStatus === 'checked_in';
+      const actionText = isCheckedIn ? 'Check Out' : 'Check In';
+      const statusEmoji = isCheckedIn ? '🏠' : '🚪';
+      const actionEmoji = isCheckedIn ? '🚪' : '🏠';
+      const statusText = isCheckedIn ? 'checked in' : 'checked out';
+      const actionColor = isCheckedIn ? '#ef4444' : '#10b981';
+
+      const result = await Swal.fire({
+        title: '🐐 Goat Status',
+        html: `
+          <div class="text-center">
+            <div class="text-3xl mb-3">${statusEmoji}</div>
+            <p class="text-sm mb-2">Goat ID: <strong>${goatId}</strong></p>
+            <div class="bg-gray-100 rounded-lg p-3 mb-3">
+              <p class="text-sm font-medium">Current Status: <span class="text-blue-600">${statusText}</span></p>
+            </div>
+            <p class="text-sm mb-2">
+              ${actionEmoji} Do you want to <strong>${actionText.toLowerCase()}</strong> this goat?
+            </p>
+          </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: actionColor,
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: `✅ ${actionText}`,
+        cancelButtonText: '❌ Cancel',
+        customClass: {
+          popup: 'rounded-xl text-sm',
+          confirmButton: 'rounded-lg px-4 py-2 text-sm font-medium',
+          cancelButton: 'rounded-lg px-4 py-2 text-sm font-medium'
+        }
+      });
+
+      if (result.isConfirmed) {
+        await handleUpdateStatus(goatId, isCheckedIn ? 'check_out' : 'check_in');
+      }
+    } catch (error) {
+      console.error('Error in confirmation dialog:', error);
+      Swal.fire({
+        title: '❌ Error!',
+        text: 'Failed to fetch goat status. Please try again.',
+        icon: 'error',
+        customClass: {
+          popup: 'rounded-xl'
+        }
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (goatId, action) => {
     setIsLoading(true);
     try {
-      const result = await GoatRegistrationService.scanGoat(goatId);
+      const result = await GoatRegistrationService.scanGoat(goatId, action);
+      
+      const isCheckOut = action === 'check_out';
+      const successEmoji = isCheckOut ? '🚪' : '🏠';
+      const actionText = isCheckOut ? 'checked out' : 'checked in';
       
       await Swal.fire({
         title: '🎉 Success!',
         html: `
           <div class="text-center">
-            <div class="text-3xl mb-2">✅</div>
-            <p class="text-sm">${result.message}</p>
+            <div class="text-4xl mb-3">${successEmoji}</div>
+            <p class="text-sm mb-1">Goat <strong>${goatId}</strong></p>
+            <p class="text-sm font-medium text-green-600">Successfully ${actionText}!</p>
+            <p class="text-xs text-gray-500 mt-2">${result.message || `Goat has been ${actionText}`}</p>
           </div>
         `,
         icon: 'success',
-        timer: 1500,
+        timer: 2000,
         showConfirmButton: false,
         customClass: {
           popup: 'rounded-xl'
@@ -82,7 +147,7 @@ const GoatCheckinCheckout = () => {
 
       setTimeout(() => {
         navigate('/dashboard/manage-goat');
-      }, 1500);
+      }, 2000);
 
     } catch (error) {
       console.error('Error updating goat status:', error);
@@ -93,10 +158,11 @@ const GoatCheckinCheckout = () => {
           <div class="text-center">
             <div class="text-3xl mb-2">⚠️</div>
             <p class="text-sm">${error.response?.data?.message || 'Failed to update status'}</p>
+            <p class="text-xs text-gray-500 mt-1">Please try again or contact support</p>
           </div>
         `,
         icon: 'error',
-        timer: 2000,
+        timer: 3000,
         customClass: {
           popup: 'rounded-xl'
         }
