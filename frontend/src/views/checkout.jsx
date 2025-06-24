@@ -3,6 +3,7 @@ import { BrowserMultiFormatReader } from '@zxing/browser';
 import { BarcodeFormat, DecodeHintType } from '@zxing/library';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios'; // ADD THIS IMPORT - This was missing!
 import GoatRegistrationService from "../Services/GoatManagement";
 import BarcodeScannerComponent from "react-qr-barcode-scanner";
 
@@ -31,37 +32,105 @@ const showConfirmationDialog = async (goatId) => {
   try {
     // First check goat status from backend
     setIsLoading(true);
-    console.log(`Fetching goat status for ID: ${goatId}`); // Log the ID being fetched
+    console.log('=== STARTING GOAT STATUS CHECK ===');
+    console.log(`Fetching goat status for ID: ${goatId}`);
+    console.log(`Request URL: https://rent.abyride.com/goats/${goatId}`);
+    console.log(`Request timestamp: ${new Date().toISOString()}`);
     
     const response = await axios.get(`https://rent.abyride.com/goats/${goatId}`, {
       headers: {
         'Content-Type': 'application/json',
         // Add any other required headers here
-      }
+      },
+      timeout: 10000, // 10 second timeout
     }).catch(error => {
-      console.error('Axios request failed:', {
-        error: error.message,
-        config: error.config,
-        response: error.response?.data,
-        status: error.response?.status,
+      console.error('=== AXIOS REQUEST FAILED ===');
+      console.error('Error message:', error.message);
+      console.error('Error code:', error.code);
+      console.error('Request config:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers,
+        timeout: error.config?.timeout
       });
+      
+      if (error.response) {
+        // Server responded with error status
+        console.error('Response status:', error.response.status);
+        console.error('Response statusText:', error.response.statusText);
+        console.error('Response headers:', error.response.headers);
+        console.error('Response data:', error.response.data);
+        console.error('Response data type:', typeof error.response.data);
+      } else if (error.request) {
+        // Request was made but no response received
+        console.error('No response received');
+        console.error('Request details:', error.request);
+      } else {
+        // Something else happened
+        console.error('Request setup error:', error.message);
+      }
+      
       throw error;
     });
 
-    console.log('Goat status response:', response.data); // Log full response
+    console.log('=== RESPONSE RECEIVED ===');
+    console.log('Response status:', response.status);
+    console.log('Response statusText:', response.statusText);
+    console.log('Response headers:', response.headers);
+    console.log('Raw response data:', response.data);
+    console.log('Response data type:', typeof response.data);
+    console.log('Response data keys:', Object.keys(response.data || {}));
     
     const goatInfo = response.data;
     setIsLoading(false);
     
-    if (!goatInfo || !goatInfo.status) {
-      console.error('Invalid response structure:', goatInfo);
-      throw new Error('Invalid goat status response');
+    // Enhanced validation with detailed logging
+    console.log('=== VALIDATING RESPONSE DATA ===');
+    console.log('goatInfo exists:', !!goatInfo);
+    console.log('goatInfo type:', typeof goatInfo);
+    console.log('goatInfo content:', JSON.stringify(goatInfo, null, 2));
+    
+    if (!goatInfo) {
+      console.error('=== VALIDATION FAILED: goatInfo is null/undefined ===');
+      throw new Error('No goat information received from server');
     }
     
-    const currentStatus = goatInfo.status;
-    console.log(`Current status for goat ${goatId}: ${currentStatus}`); // Log the status
+    // Check for different possible status field names
+    console.log('Checking for status field...');
+    console.log('goatInfo.status:', goatInfo.status);
+    console.log('goatInfo.Status:', goatInfo.Status);
+    console.log('goatInfo.currentStatus:', goatInfo.currentStatus);
+    console.log('goatInfo.state:', goatInfo.state);
+    console.log('goatInfo.data?.status:', goatInfo.data?.status);
+    
+    let currentStatus = null;
+    
+    // Try different possible status field names/locations
+    if (goatInfo.status) {
+      currentStatus = goatInfo.status;
+    } else if (goatInfo.Status) {
+      currentStatus = goatInfo.Status;
+    } else if (goatInfo.currentStatus) {
+      currentStatus = goatInfo.currentStatus;
+    } else if (goatInfo.state) {
+      currentStatus = goatInfo.state;
+    } else if (goatInfo.data?.status) {
+      currentStatus = goatInfo.data.status;
+    }
+    
+    if (!currentStatus) {
+      console.error('=== VALIDATION FAILED: status field not found ===');
+      console.error('Available fields in goatInfo:', Object.keys(goatInfo));
+      console.error('Full goatInfo structure:', JSON.stringify(goatInfo, null, 2));
+      throw new Error(`Goat status field not found. Available fields: ${Object.keys(goatInfo).join(', ')}`);
+    }
+    
+    console.log('=== VALIDATION PASSED ===');
+    console.log(`Current status for goat ${goatId}: ${currentStatus}`);
     
     const action = currentStatus === 'in' ? 'out' : 'in';
+    console.log(`Proposed action: ${action}`);
+    
     const result = await Swal.fire({
       title: '🐐 Confirm Action',
       html: `
@@ -86,20 +155,67 @@ const showConfirmationDialog = async (goatId) => {
     });
 
     if (result.isConfirmed) {
+      console.log('User confirmed action, proceeding with status update');
       await handleUpdateStatus(goatId);
+    } else {
+      console.log('User cancelled action');
     }
+    
   } catch (error) {
     setIsLoading(false);
-    console.error('Error in showConfirmationDialog:', {
-      error: error.message,
-      stack: error.stack,
-      goatId: goatId,
-      timestamp: new Date().toISOString(),
-    });
+    console.error('=== ERROR IN showConfirmationDialog ===');
+    console.error('Error type:', error.constructor.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('GoatId:', goatId);
+    console.error('Timestamp:', new Date().toISOString());
+    
+    // Determine error type and show appropriate message
+    let errorMessage = 'Failed to get goat information';
+    let errorDetails = '';
+    
+    if (error.code === 'ENOTFOUND') {
+      errorMessage = 'Network error: Cannot reach server';
+      errorDetails = 'Check your internet connection';
+    } else if (error.code === 'ECONNABORTED') {
+      errorMessage = 'Request timeout';
+      errorDetails = 'Server took too long to respond';
+    } else if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      if (status === 404) {
+        errorMessage = `Goat ID ${goatId} not found`;
+        errorDetails = 'Please check the goat ID and try again';
+      } else if (status === 500) {
+        errorMessage = 'Server error';
+        errorDetails = data?.message || 'Internal server error occurred';
+      } else if (status >= 400 && status < 500) {
+        errorMessage = 'Client error';
+        errorDetails = data?.message || `HTTP ${status} error`;
+      } else {
+        errorMessage = 'Server error';
+        errorDetails = data?.message || `HTTP ${status} error`;
+      }
+    } else if (error.message.includes('status field')) {
+      errorMessage = 'Invalid server response';
+      errorDetails = error.message;
+    }
+    
+    console.error('=== SHOWING ERROR TO USER ===');
+    console.error('Error message:', errorMessage);
+    console.error('Error details:', errorDetails);
     
     Swal.fire({
       title: '❌ Error',
-      text: error.response?.data?.message || 'Failed to get goat information',
+      html: `
+        <div class="text-center">
+          <div class="text-2xl mb-2">⚠️</div>
+          <p class="text-sm font-medium">${errorMessage}</p>
+          ${errorDetails ? `<p class="text-xs mt-1 text-gray-600">${errorDetails}</p>` : ''}
+          <p class="text-xs mt-2 text-gray-500">GoatID: ${goatId} | Check console for detailed logs</p>
+        </div>
+      `,
       icon: 'error',
       customClass: {
         popup: 'rounded-xl'
@@ -111,7 +227,13 @@ const showConfirmationDialog = async (goatId) => {
   const handleUpdateStatus = async (goatId) => {
     setIsLoading(true);
     try {
+      console.log('=== STARTING STATUS UPDATE ===');
+      console.log(`Updating status for goat ID: ${goatId}`);
+      
       const result = await GoatRegistrationService.scanGoat(goatId);
+      
+      console.log('=== STATUS UPDATE SUCCESS ===');
+      console.log('Update result:', result);
       
       await Swal.fire({
         title: '🎉 Success!',
@@ -138,7 +260,12 @@ const showConfirmationDialog = async (goatId) => {
       }, 1500);
 
     } catch (error) {
-      console.error('Error updating goat status:', error);
+      console.error('=== ERROR UPDATING GOAT STATUS ===');
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
 
       Swal.fire({
         title: '❌ Error!',
@@ -146,6 +273,7 @@ const showConfirmationDialog = async (goatId) => {
           <div class="text-center">
             <div class="text-3xl mb-2">⚠️</div>
             <p class="text-sm">${error.response?.data?.message || 'Failed to update status'}</p>
+            <p class="text-xs mt-1 text-gray-500">GoatID: ${goatId}</p>
           </div>
         `,
         icon: 'error',
@@ -189,6 +317,7 @@ const showConfirmationDialog = async (goatId) => {
       try {
         const result = await codeReader.decodeFromImageElement(img, hints);
         const scanned = result.getText();
+        console.log('Barcode scanned successfully:', scanned);
         setScannedId(scanned);
         await showConfirmationDialog(scanned);
       } catch (err) {
@@ -232,6 +361,7 @@ const showConfirmationDialog = async (goatId) => {
       return;
     }
 
+    console.log('Manual ID submitted:', manualId.trim());
     setScannedId(manualId.trim());
     await showConfirmationDialog(manualId.trim());
   };
@@ -240,6 +370,38 @@ const showConfirmationDialog = async (goatId) => {
     navigate('/dashboard/manage-goat');
   };
 
+  // Debug function you can call manually in console: window.debugGoatApi('your-goat-id')
+  window.debugGoatApi = async (goatId) => {
+    console.log('=== MANUAL DEBUG API CALL ===');
+    try {
+      const response = await fetch(`https://rent.abyride.com/goats/${goatId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      console.log('Fetch response status:', response.status);
+      console.log('Fetch response ok:', response.ok);
+      console.log('Fetch response headers:', [...response.headers.entries()]);
+      
+      const text = await response.text();
+      console.log('Raw response text:', text);
+      
+      try {
+        const json = JSON.parse(text);
+        console.log('Parsed JSON:', json);
+        return json;
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', parseError);
+        console.error('Response was not valid JSON:', text);
+        return null;
+      }
+    } catch (fetchError) {
+      console.error('Fetch error:', fetchError);
+      return null;
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 p-3">
       <div className="max-w-lg mx-auto">
