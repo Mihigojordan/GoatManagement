@@ -3,7 +3,7 @@ import { BrowserMultiFormatReader } from '@zxing/browser';
 import { BarcodeFormat, DecodeHintType } from '@zxing/library';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // ADD THIS IMPORT - This was missing!
+import axios from 'axios';
 import GoatRegistrationService from "../Services/GoatManagement";
 import BarcodeScannerComponent from "react-qr-barcode-scanner";
 
@@ -70,14 +70,16 @@ if (!currentStatus) {
 const status = currentStatus.toLowerCase();
 let action = null;
 
+// FIX: Handle all possible status values including "checkout"
 if (status === 'checkedin') {
-  action = 'in';
-} else if (status === 'checkedout') {
-  action = 'out';
+  action = 'out'; // If checked in, user will check out
+} else if (status === 'checkedout' || status === 'checkout') {
+  action = 'in'; // If checked out, user will check in
 } else {
-  throw new Error(`Unrecognized status: ${currentStatus}`);
+  // Log available status for debugging
+  console.warn(`Unrecognized status: ${currentStatus}. Proceeding with toggle action.`);
+  action = 'toggle'; // Default action for unknown status
 }
-
 
 const result = await Swal.fire({
       title: '🐐 Confirm Action',
@@ -85,7 +87,7 @@ const result = await Swal.fire({
         <div class="text-center">
           <div class="text-2xl mb-2">🎯</div>
           <p class="text-sm mb-1">Goat ID: <strong>${goatId}</strong></p>
-<p className="text-sm">This goat is currently <strong>${currentStatus.toUpperCase()}</strong>. Do you want to change it?</p>
+          <p class="text-sm">This goat is currently <strong>${currentStatus.toUpperCase()}</strong>. Do you want to change it?</p>
         </div>
       `,
       icon: 'question',
@@ -172,13 +174,32 @@ const result = await Swal.fire({
       console.log('=== STATUS UPDATE SUCCESS ===');
       console.log('Update result:', result);
       
+      // FIX: Safely access the status from the result
+      let newStatus = 'Updated';
+      let message = 'Status updated successfully';
+      
+      if (result) {
+        // Check different possible response structures
+        if (result.message) {
+          message = result.message;
+        }
+        
+        if (result.data?.status) {
+          newStatus = result.data.status;
+        } else if (result.status) {
+          newStatus = result.status;
+        } else if (result.newStatus) {
+          newStatus = result.newStatus;
+        }
+      }
+      
       await Swal.fire({
         title: '🎉 Success!',
         html: `
           <div class="text-center">
             <div class="text-3xl mb-2">✅</div>
-            <p class="text-sm">${result.message}</p>
-            <p class="text-xs mt-1">New Status: ${result.data.status.toUpperCase()}</p>
+            <p class="text-sm">${message}</p>
+            <p class="text-xs mt-1">New Status: ${newStatus.toString().toUpperCase()}</p>
           </div>
         `,
         icon: 'success',
@@ -339,6 +360,7 @@ const result = await Swal.fire({
       return null;
     }
   };
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 p-3">
       <div className="max-w-lg mx-auto">
