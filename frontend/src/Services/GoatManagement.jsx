@@ -71,7 +71,7 @@ async registerGoat(goatData) {
       console.error('Get goat by ID error:', error);
       throw error;
     }
-  }
+  } 
   // Get goat details by ID
   async getGoatCounts() {
     try {

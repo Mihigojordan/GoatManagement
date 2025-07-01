@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../Prisma/prisma.service';
 import { EmailService } from './Email.service';
 import * as bwipjs from 'bwip-js';

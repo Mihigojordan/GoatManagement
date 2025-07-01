@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
@@ -35,7 +35,7 @@ async function bootstrap() {
     prefix: '/uploads',
   });
 
-
+  
   // Allowlist of allowed frontend origins
   const allowedOrigins = [
     'http://localhost:5173',
@@ -43,7 +43,7 @@ async function bootstrap() {
     'https://www.ishimwefarm.com',
   ];
 
-
+  
   // CORS setup
 app.enableCors({
   origin: (origin, callback) => {
@@ -64,6 +64,3 @@ app.enableCors({
 
 
 bootstrap();
-
-
-
