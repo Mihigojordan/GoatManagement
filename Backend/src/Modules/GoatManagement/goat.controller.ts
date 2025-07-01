@@ -6,8 +6,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Logger,
-  Req,
-  ParseIntPipe,
+
   Param
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';

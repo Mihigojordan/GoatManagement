@@ -154,16 +154,16 @@ export class GoatService {
 async getGoatStatusById(id: string) {
   const goat = await this.prisma.goat.findUnique({
     where: { id },
-    select: {
-      isCheckedIn: true, // Only fetch the status
-    },
   });
 
   if (!goat) {
     throw new NotFoundException(`Goat with ID ${id} not found`);
   }
 
-  return { status: goat.isCheckedIn ? 'in' : 'out' };
+  return {
+    message: 'Goat data retrieved successfully',
+    data: goat,
+  };
 }
 
 
