@@ -55,7 +55,7 @@ export class AdminService {
       return { message: 'admin registered successfully', admin: createdAdmin };
     } catch (error) {
       console.error('Error registering admin:', error);
-      throw new InternalServerErrorException(error.message);
+      // throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -101,7 +101,7 @@ export class AdminService {
       return { message: 'Admin logged in successfully' };
     } catch (error) {
       console.error('Error logging in admin:', error);
-      throw new InternalServerErrorException(error.message);
+      // throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -117,7 +117,7 @@ export class AdminService {
       return { message: 'Admin logged out successfully' };
     } catch (error) {
       console.error('Error logging out admin:', error);
-      throw new InternalServerErrorException(error.message);
+      // throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -135,7 +135,7 @@ export class AdminService {
       return admin;
     } catch (error) {
       console.error('Error fetching admin profile:', error);
-      throw new InternalServerErrorException(error.message);
+      // throw new InternalServerErrorException(error.message);
     }
   }
 

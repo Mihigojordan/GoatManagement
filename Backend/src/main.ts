@@ -20,14 +20,14 @@ async function bootstrap() {
 
 
   // Log incoming requests (optional but useful for debugging)
-  app.use((req, res, next) => {
-    console.log('--- Incoming Request ---');
-    console.log('Origin:', req.headers.origin);
-    console.log('Method:', req.method);
-    console.log('URL:', req.originalUrl);
-    console.log('Headers:', req.headers);
-    next();
-  });
+  // app.use((req, res, next) => {
+  //   console.log('--- Incoming Request ---');
+  //   console.log('Origin:', req.headers.origin);
+  //   console.log('Method:', req.method);
+  //   console.log('URL:', req.originalUrl);
+  //   console.log('Headers:', req.headers);
+  //   next();
+  // });
 
 
   // Serve uploaded files (e.g., images) from "/uploads"

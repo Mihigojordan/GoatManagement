@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Request } from "express";
-import { RequestWithAdmin } from "src/common/interfaces/request-admin.interface";
+import { RequestWithAdmin } from "../common/interfaces/request-admin.interface";
  
 @Injectable()
 export class AdminAuthGuard implements CanActivate {
