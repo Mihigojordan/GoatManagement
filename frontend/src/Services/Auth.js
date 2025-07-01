@@ -1,19 +1,28 @@
 import axios from 'axios';
 
 class AdminService {
-    constructor(baseURL = import.meta.env.VITE_API_URL) {
+    constructor(baseURL =
+        import.meta.env.VITE_API_URL) {
         this.api = axios.create({
             baseURL,
-            withCredentials: true,
             headers: {
                 'Content-Type': 'application/json',
             },
         });
 
+        // Add interceptor to include token in every request
+        this.api.interceptors.request.use((config) => {
+            const token = localStorage.getItem('adminToken');
+            if (token) {
+                config.headers['Authorization'] = `Bearer ${token}`;
+            }
+            return config;
+        });
+
         this.api.interceptors.response.use(
             (response) => response,
             (error) => {
-                const message = error.response?.data?.message || error.message || 'An error occurred';
+                const message = error.response.data.message || error.message || 'An error occurred';
                 console.error('API Error:', message);
                 throw new Error(message);
             }
@@ -23,6 +32,11 @@ class AdminService {
     async login(email, password) {
         try {
             const response = await this.api.post('/admin/login', { email, password });
+
+            // Save the token from response
+            const token = response.data.token;
+            localStorage.setItem('adminToken', token);
+
             return response.data;
         } catch (error) {
             console.error('Login error:', error);
@@ -42,6 +56,8 @@ class AdminService {
 
     async logout() {
         try {
+            // Optionally call backend or just clear token
+            localStorage.removeItem('adminToken');
             const response = await this.api.post('/admin/logout');
             return response.data;
         } catch (error) {
@@ -79,7 +95,6 @@ class AdminService {
         }
     }
 
-    // New method to lock the admin session
     async lock() {
         try {
             const response = await this.api.post('/admin/lock');
@@ -90,7 +105,6 @@ class AdminService {
         }
     }
 
-    // New method to unlock the admin session
     async unlock(password) {
         try {
             const response = await this.api.post('/admin/unlock', { password });
@@ -102,17 +116,9 @@ class AdminService {
     }
 
     getInitials(name) {
-        if (!name || typeof name !== 'string') {
-            return '';
-        }
-
-        const nameParts = name.trim().split(/\s+/).filter(part => part.length > 0);
-        const initials = nameParts
-            .map(part => part.charAt(0))
-            .join('')
-            .toUpperCase();
-
-        return initials;
+        if (!name || typeof name !== 'string') return '';
+        const nameParts = name.trim().split(/\s+/).filter(Boolean);
+        return nameParts.map(part => part.charAt(0)).join('').toUpperCase();
     }
 }
 

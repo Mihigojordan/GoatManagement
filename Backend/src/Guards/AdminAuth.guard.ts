@@ -1,35 +1,38 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
-import { Request } from "express";
-import { RequestWithAdmin } from "../common/interfaces/request-admin.interface";
- 
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { RequestWithAdmin } from '../common/interfaces/request-admin.interface';
+
 @Injectable()
 export class AdminAuthGuard implements CanActivate {
-    constructor(private readonly jwtService: JwtService) {}
+  constructor(private readonly jwtService: JwtService) {}
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
-        const request = context.switchToHttp().getRequest<RequestWithAdmin>();
-       const token = this.extractTokenFromCookies(request);
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<RequestWithAdmin>();
+    const token = this.extractTokenFromHeader(request);
 
-       if(!token){
-        throw new UnauthorizedException('authentication admin token is missing');
-       }
-
-       try {
-        const decodedAdmin = await this.jwtService.verifyAsync(token, {
-            secret: process.env.JWT_SECRET, // Ensure JWT_SECRET is securely stored
-        })
-        // Optional: Extend with custom admin checks here (e.g., isBlocked, verified, etc.)
-        // Attach decoded admin data to request for downstream usage
-        request.admin = decodedAdmin;
-
-        return true; // Placeholder, implement your logic
-       } catch (error) {
-        throw new UnauthorizedException('invalid or expired token');
-       }
+    if (!token) {
+      throw new UnauthorizedException('Authorization token missing');
     }
 
-    private extractTokenFromCookies(req: Request): string | undefined {
-        return req.cookies?.['adminAccessToken'];
+    try {
+      const decodedAdmin = await this.jwtService.verifyAsync(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      request.admin = decodedAdmin;
+      return true;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
     }
+  }
+
+  private extractTokenFromHeader(req: RequestWithAdmin): string | undefined {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return;
+    return authHeader.split(' ')[1];
+  }
 }
