@@ -1,28 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
 import GoatRegistrationService from "../Services/GoatManagement";
-
+import adminServiceInstance from "../Services/Auth";
 
 function GoatDetail() {
   const { id } = useParams();
   const [goat, setGoat] = useState(null);
+  const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchGoatDetails = async () => {
+    const fetchData = async () => {
       try {
-    const goatData = await GoatRegistrationService.getGoatById(id);
+        setLoading(true);
+        const [goatData, adminData] = await Promise.all([
+          GoatRegistrationService.getGoatById(id),
+          adminServiceInstance.getProfile()
+        ]);
         setGoat(goatData);
-        setLoading(false);
+        setAdmin(adminData);
+        setError(null);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Failed to fetch data');
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchGoatDetails();
+    fetchData();
   }, [id]);
 
   if (loading) return (
@@ -45,12 +51,10 @@ function GoatDetail() {
   );
 
   // Construct the full image URL
-const imagePath = goat.image ? goat.image.replace('uploads\\goats\\', '') : '';
-const fullImageUrl = goat.image 
-  ? `http://localhost/GoatManagement/Backend/uploads/goats/${imagePath}`
-  : <>
-  no image found               
-  </>;
+  const imagePath = goat.image ? goat.image.replace('uploads\\goats\\', '') : '';
+  const fullImageUrl = goat.image 
+    ? `http://localhost/GoatManagement/Backend/uploads/goats/${imagePath}`
+    : null;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -60,16 +64,22 @@ const fullImageUrl = goat.image
         {/* Image Section */}
         <div className="w-full md:w-1/3 lg:w-1/4">
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <img 
-              src={fullImageUrl} 
-              alt={goat.goatName}
-              className="w-full h-auto object-cover"
-              onError={(e) => {
-                e.target.onerror = null; 
-                e.target.src = 'https://via.placeholder.com/300?text=No+Image+Available';
-                e.target.className = "w-full h-64 object-contain bg-gray-100 p-4";
-              }}
-            />
+            {fullImageUrl ? (
+              <img 
+                src={fullImageUrl} 
+                alt={goat.goatName}
+                className="w-full h-auto object-cover"
+                onError={(e) => {
+                  e.currentTarget.onerror = null; 
+                  e.currentTarget.src = 'https://via.placeholder.com/300?text=No+Image+Available';
+                  e.currentTarget.className = "w-full h-64 object-contain bg-gray-100 p-4";
+                }}
+              />
+            ) : (
+              <div className="w-full h-64 flex items-center justify-center bg-gray-100 text-gray-400">
+                No image found
+              </div>
+            )}
             <div className="p-4">
               <h2 className="text-xl font-semibold text-gray-800">{goat.goatName}</h2>
               <div className="flex items-center mt-2">
@@ -122,7 +132,6 @@ const fullImageUrl = goat.image
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-medium text-gray-700 mb-2">Sire (Father)</h4>
                   <div className="space-y-2">
-                  
                     <div>
                       <p className="text-sm font-medium text-gray-500">Registration Number</p>
                       <p className="text-gray-800">{goat.sireRegistrationNumber}</p>
@@ -133,7 +142,6 @@ const fullImageUrl = goat.image
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-medium text-gray-700 mb-2">Dam (Mother)</h4>
                   <div className="space-y-2">
-                  
                     <div>
                       <p className="text-sm font-medium text-gray-500">Registration Number</p>
                       <p className="text-gray-800">{goat.damRegistrationNumber}</p>
@@ -146,18 +154,21 @@ const fullImageUrl = goat.image
           
           {/* Additional Information */}
           <h3 className="text-xl font-semibold text-gray-700 mb-4 pb-2 border-b mt-4">Additional Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-  <div className="bg-gray-50 p-3 rounded-lg ">
-                <p className="text-sm font-medium text-gray-500">Addition Note</p>
-                <p className="text-gray-800">{goat.note}</p>
-              </div>
-          <div className="mt-6 bg-white rounded-lg shadow-md p-6">
-            
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gray-50 p-3 rounded-lg ">
+              <p className="text-sm font-medium text-gray-500">Addition Note</p>
+              <p className="text-gray-800">{goat.note}</p>
+            </div>
 
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-sm font-medium text-gray-500">Goat ID</p>
-                <p className="text-gray-800">{goat.id}</p>
-              </div>
+            <div className="mt-6 bg-white rounded-lg shadow-md p-6">
+              {/* Conditionally show Goat ID only if role is 'admin' */}
+              {admin?.role === 'Admin' && (
+                <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                  <p className="text-sm font-medium text-gray-500">Goat ID</p>
+                  <p className="text-gray-800">{goat.id}</p>
+                </div>
+              )}
+
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-sm font-medium text-gray-500">Created At</p>
                 <p className="text-gray-800">{new Date(goat.createdAt).toLocaleString()}</p>

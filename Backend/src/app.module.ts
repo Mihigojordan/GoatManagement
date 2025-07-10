@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AdminModule } from './Modules/admin/admin.module';
 import { PrismaModule } from './Prisma/prisma.module';
 import { GoatModule } from './Modules/GoatManagement/goat.module';
+import { AdminAuthGuard } from './Guards/AdminAuth.guard';
 
 @Module({
   imports: [
@@ -13,7 +14,8 @@ import { GoatModule } from './Modules/GoatManagement/goat.module';
     }),
     PrismaModule, 
     AdminModule,
-    GoatModule
+    GoatModule,
+   
   ],
 
 

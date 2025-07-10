@@ -4,7 +4,6 @@ import { EmailService } from './Email.service';
 import * as bwipjs from 'bwip-js';
 import * as fs from 'fs';
 import { join } from 'path';
-import { Status } from '@prisma/client';
 
 @Injectable()
 export class GoatService {
@@ -123,25 +122,146 @@ export class GoatService {
   }
 
   // ✅ Toggle goat check-in/check-out status
-  async toggleGoatStatus(goatId: string) {
-    const goat = await this.prisma.goat.findUnique({ where: { id: goatId } });
+async checkInGoat(goatId: string, adminId: string | undefined) {
+  if (!adminId) {
+    throw new Error('Admin ID is required');
+  }
 
-    if (!goat) {
-      throw new Error('Goat not found');
+
+  // Check if goat is in checkOut table
+  const checkOutRecord = await this.prisma.checkOut.findFirst({
+    where: { goatId },
+  });
+
+  if (!checkOutRecord) {
+    throw new Error('This goat is not currently checked out');
+  }
+
+ // Remove the checkout record(s)
+  await this.prisma.checkOut.deleteMany({
+    where: { goatId },
+  });
+
+  // Check the goat in
+  const checkIn = await this.prisma.checkIn.create({
+    data: {
+      goatId,
+      adminId,
+    },
+  });
+
+  return checkIn;
+}
+
+
+  async checkInAllGoats(adminId: string) {
+    // (Guard ensures adminId is valid, but we can still sanity‑check if needed)
+    const admin = await this.prisma.admin.findUnique({ where: { id: adminId } });
+    if (!admin) {
+      throw new Error(`Admin with ID ${adminId} does not exist.`);
     }
 
-    const newStatus = goat.status === Status.checkedin ? Status.checkout : Status.checkedin;
+    const allGoats = await this.prisma.goat.findMany();
+    if (allGoats.length === 0) {
+      throw new Error('No goats found to check in.');
+    }
 
-    await this.prisma.goat.update({
-      where: { id: goatId },
-      data: { status: newStatus },
-    });
+    const checkIns = await Promise.all(
+      allGoats.map((goat) =>
+        this.prisma.checkIn.create({
+          data: {
+            goatId: goat.id,
+            adminId,
+          },
+        }),
+      ),
+    );
 
     return {
-      message: `Goat ${goatId} status updated to ${newStatus}`,
-      status: newStatus,
+      message: `${checkIns.length} goats have been checked in by admin ${adminId}`,
+      checkIns,
     };
   }
+  async checkOutAllGoats(adminId: string) {
+  // Sanity check for admin existence
+  const admin = await this.prisma.admin.findUnique({ where: { id: adminId } });
+  if (!admin) {
+    throw new Error(`Admin with ID ${adminId} does not exist.`);
+  }
+
+  // Fetch all check-in records
+  const checkInRecords = await this.prisma.checkIn.findMany({
+    select: { goatId: true, adminId: true },
+  });
+
+  if (checkInRecords.length === 0) {
+    throw new Error('No goats are currently checked in.');
+  }
+
+  // For each checked-in goat, move to checkOut
+  const checkOuts = await Promise.all(
+    checkInRecords.map(async (record) => {
+      const checkOut = await this.prisma.checkOut.create({
+        data: {
+          goatId: record.goatId,
+          adminId: record.adminId,
+        },
+      });
+
+      await this.prisma.checkIn.deleteMany({
+        where: {
+          goatId: record.goatId,
+          adminId: record.adminId,
+        },
+      });
+
+      return checkOut;
+    }),
+  );
+
+  return {
+    message: `${checkOuts.length} goats have been checked out by admin ${adminId}`,
+    checkOuts,
+  };
+}
+
+
+
+
+
+
+async checkOutGoat(goatId: string, adminId: string | undefined) {
+  if (!adminId) {
+    throw new Error('Admin ID is required');
+  }
+
+  // Check if goat exists
+  const goat = await this.prisma.goat.findUnique({ where: { id: goatId } });
+  if (!goat) {
+    throw new Error('Goat not found');
+  }
+
+  // Remove from checkIn table (if exists)
+  await this.prisma.checkIn.deleteMany({
+    where: { goatId },
+  });
+
+  // Add to checkOut table
+  const checkOut = await this.prisma.checkOut.create({
+    data: {
+      goatId,
+      adminId,
+    },
+  });
+
+  return {
+    message: `Goat ${goat.goatName} checked out by admin ${adminId}`,
+    checkOut,
+  };
+}
+
+
+
 
   // ✅ Get single goat by ID
   async getGoatById(id: string) {
@@ -168,17 +288,47 @@ async getGoatStatusById(id: string) {
 
 
   // ✅ Get goat count stats
-  async getGoatCounts() {
-    const [total, checkedin, checkout] = await Promise.all([
-      this.prisma.goat.count(),
-      this.prisma.goat.count({ where: { status: 'checkedin' } }),
-      this.prisma.goat.count({ where: { status: 'checkout' } }),
-    ]);
+async getGoatCounts() {
+  const totalGoats = await this.prisma.goat.count();
 
-    return {
-      totalGoats: total,
-      checkedInGoats: checkedin,
-      checkedOutGoats: checkout,
-    };
+  const goats = await this.prisma.goat.findMany({
+    select: {
+      id: true,
+      checkIns: {
+        orderBy: { date: 'desc' },
+        take: 1,
+        select: { date: true }
+      },
+      checkOuts: {
+        orderBy: { date: 'desc' },
+        take: 1,
+        select: { date: true }
+      }
+    }
+  });
+
+  let checkedInGoats = 0;
+  let checkedOutGoats = 0;
+
+  for (const goat of goats) {
+    const lastCheckIn = goat.checkIns[0]?.date;
+    const lastCheckOut = goat.checkOuts[0]?.date;
+
+    if (lastCheckIn && (!lastCheckOut || lastCheckIn > lastCheckOut)) {
+      checkedInGoats++;
+    } else if (lastCheckOut && (!lastCheckIn || lastCheckOut > lastCheckIn)) {
+      checkedOutGoats++;
+    }
   }
+
+  return {
+    totalGoats,
+    checkedInGoats,
+    checkedOutGoats
+  };
+}
+
+
+
+
 }

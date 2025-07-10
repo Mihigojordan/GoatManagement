@@ -8,6 +8,7 @@ import { Children, lazy, Suspense } from "react";
 // Reusable Loader Component
 import Loader from "../components/Loading.jsx";
 import BarcodeCheckout from "../views/checkout.jsx";
+import BarcodeCheckin from "../views/checkin.jsx";
 
 
 const ErrorLayout = lazy(() => import('../Error/ErrorLayout.jsx'));
@@ -102,9 +103,15 @@ const routes = [
                   </SuspenseWrapper>
                 ),
               },
-
-
-
+              
+              {
+                path: "checkout",
+                element: (
+                  <SuspenseWrapper>
+                    <BarcodeCheckin />
+                  </SuspenseWrapper>
+                ),
+              },
             ]
           }
         ]

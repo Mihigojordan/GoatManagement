@@ -15,42 +15,49 @@ export class AdminService {
   ) {}
 
   emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  async registerAdmin(email: string, password: string, names: string) {
-    try {
-      if (!this.emailRegex.test(email) || !password || !names) {
-        throw new BadRequestException('Email, password, and names are required');
-      }
-
-      if (password.length < 6) {
-        throw new BadRequestException('Password must be at least 6 characters long');
-      }
-
-      const existingAdmin = await this.prismaService.admin.findUnique({
-        where: { email },
-      });
-      if (existingAdmin) {
-        throw new BadRequestException('Admin with this email already exists');
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const createdAdmin = await this.prismaService.admin.create({
-        data: {
-          email,
-          password: hashedPassword,
-          names,
-        },
-      });
-
-      if (!createdAdmin) {
-        throw new InternalServerErrorException('Failed to create admin');
-      }
-
-      return { message: 'Admin registered successfully', admin: createdAdmin };
-    } catch (error) {
-      console.error('Error registering admin:', error);
+async registerAdmin(email: string, password: string, names: string, role = 'admin') {
+  try {
+    if (!this.emailRegex.test(email) || !password || !names) {
+      throw new BadRequestException('Email, password, and names are required');
     }
+
+    if (password.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters long');
+    }
+
+    const existingAdmin = await this.prismaService.admin.findUnique({
+      where: { email },
+    });
+
+    if (existingAdmin) {
+      throw new BadRequestException('Admin with this email already exists');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const createdAdmin = await this.prismaService.admin.create({
+      data: {
+        email,
+        password: hashedPassword,
+        names,
+        role, // ✅ Save role here
+      },
+    });
+
+    if (!createdAdmin) {
+      throw new InternalServerErrorException('Failed to create admin');
+    }
+
+    return {
+      message: 'Admin registered successfully',
+      admin: createdAdmin,
+    };
+  } catch (error) {
+    console.error('Error registering admin:', error);
+    throw new InternalServerErrorException('Unexpected error');
   }
+}
+
 
   async adminLogin(email: string, password: string) {
     try {

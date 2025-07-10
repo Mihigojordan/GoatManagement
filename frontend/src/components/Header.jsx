@@ -90,6 +90,7 @@ const Header = () => {
             >
               Manage Goat
             </NavLink>
+            {/* Separate links for Checkin and Checkout */}
             <NavLink
               to="/dashboard/check_in-check_out"
               className={({ isActive }) =>
@@ -100,7 +101,19 @@ const Header = () => {
                 }`
               }
             >
-              Checkin & Checkout
+              Check In
+            </NavLink>
+            <NavLink
+              to="/dashboard/checkout"
+              className={({ isActive }) =>
+                `px-3 py-2 text-sm font-medium transition-colors duration-200 border-b-2 ${
+                  isActive
+                    ? 'text-teal-600 border-teal-500'
+                    : 'text-gray-600 border-transparent hover:text-teal-500 hover:border-teal-300'
+                }`
+              }
+            >
+              Check Out
             </NavLink>
           </nav>
 
@@ -148,15 +161,17 @@ const Header = () => {
         </div>
 
         {/* Mobile Navigation Menu */}
-        <div className={`md:hidden transition-all duration-300 ease-in-out ${isMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+        <div
+          className={`md:hidden transition-all duration-300 ease-in-out ${
+            isMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+          }`}
+        >
           <nav className="px-2 pt-2 pb-4 space-y-1 bg-gray-50 rounded-lg mt-2 mb-2">
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
                 `block px-3 py-2 text-base font-medium rounded-md transition-colors duration-200 ${
-                  isActive
-                    ? 'text-teal-600 font-semibold'
-                    : 'text-gray-600 hover:text-teal-500'
+                  isActive ? 'text-teal-600 font-semibold' : 'text-gray-600 hover:text-teal-500'
                 }`
               }
               onClick={() => setIsMenuOpen(false)}
@@ -167,27 +182,35 @@ const Header = () => {
               to="/dashboard/manage-goat"
               className={({ isActive }) =>
                 `block px-3 py-2 text-base font-medium rounded-md transition-colors duration-200 ${
-                  isActive
-                    ? 'text-teal-600 font-semibold'
-                    : 'text-gray-600 hover:text-teal-500'
+                  isActive ? 'text-teal-600 font-semibold' : 'text-gray-600 hover:text-teal-500'
                 }`
               }
               onClick={() => setIsMenuOpen(false)}
             >
               Manage Goat
             </NavLink>
+            {/* Mobile separate links */}
             <NavLink
               to="/dashboard/check_in-check_out"
               className={({ isActive }) =>
                 `block px-3 py-2 text-base font-medium rounded-md transition-colors duration-200 ${
-                  isActive
-                    ? 'text-teal-600 font-semibold'
-                    : 'text-gray-600 hover:text-teal-500'
+                  isActive ? 'text-teal-600 font-semibold' : 'text-gray-600 hover:text-teal-500'
                 }`
               }
               onClick={() => setIsMenuOpen(false)}
             >
-              Checkin & Checkout
+              Check In
+            </NavLink>
+            <NavLink
+              to="/dashboard/check_in-check_out"
+              className={({ isActive }) =>
+                `block px-3 py-2 text-base font-medium rounded-md transition-colors duration-200 ${
+                  isActive ? 'text-teal-600 font-semibold' : 'text-gray-600 hover:text-teal-500'
+                }`
+              }
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Check Out
             </NavLink>
           </nav>
         </div>

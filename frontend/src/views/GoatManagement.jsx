@@ -284,8 +284,7 @@ const handleFormChange = (e) => {
               
     
 
-              <th className="px-2 py-2 text-center font-semibold text-gray-700">Status</th>
-              <th className="px-2 py-2 text-center font-semibold text-gray-700">Actions</th>
+          <th className="px-2 py-2 text-center font-semibold text-gray-700">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -307,11 +306,7 @@ const handleFormChange = (e) => {
                 <td className="px-2 py-2 text-center text-xs">{formatDate(registration.dateOfBirth)}</td>
                 <td className="px-2 py-2 text-center text-xs">{registration.weight ? `${registration.weight}kg` : "N/A"}</td>
                          <td className="px-2 py-2 text-center text-xs">{registration.color}</td>
-                <td className="px-2 py-2 text-center">
-                  <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(registration.status)}`}>
-                    {statusOptions.find(s => s.value === registration.status)?.label || registration.status}
-                  </span>
-                </td>
+             
                 <td className="px-2 py-2">
                   <div className="flex space-x-1 justify-center">
                     <Link

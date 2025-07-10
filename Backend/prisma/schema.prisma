@@ -1,13 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
-
 
 datasource db {
   provider = "mysql"
@@ -15,37 +8,56 @@ datasource db {
 }
 
 model Admin {
-  id String @id @default(uuid())
-  names String @unique
-  email String @unique
-  password String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+  id        String     @id @default(uuid())
+  names     String     @unique
+  email     String     @unique
+  password  String
+  role      String     @default("Admin") // e.g., admin, vet, etc.
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
-
-
-enum Status {
-  checkedin
-  checkout
+  checkIns  CheckIn[]
+  checkOuts CheckOut[]
 }
 
 model Goat {
- id String @id
-// Basic Identification Details
-  goatName                String
-  breed                   String
-  dateOfBirth             DateTime?
-  Gender                  String?
-  color                   String?
-  weight                  Float?
+  id                     String     @id
+  goatName               String
+  breed                  String
+  dateOfBirth            DateTime?
+  Gender                 String?
+  color                  String?
+  weight                 Float?
+  sireRegistrationNumber String?
+  damRegistrationNumber  String?
+  image                  String?
+  note                   String     @default("no pest and diseases ")
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @default(now())
 
-  sireRegistrationNumber  String?
+  checkIns               CheckIn[]
+  checkOuts              CheckOut[]
+}
 
-  damRegistrationNumber   String?
-  image                   String?
-  status                  Status    @default(checkedin)
-  note                    String    @default("no pest and diseases ")
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @default(now())
+model CheckIn {
+  id        String   @id @default(uuid())
+  goat      Goat     @relation(fields: [goatId], references: [id])
+  goatId    String
+
+  admin     Admin    @relation(fields: [adminId], references: [id])
+  adminId   String
+
+  date      DateTime @default(now())
+
+}
+
+model CheckOut {
+  id        String   @id @default(uuid())
+  goat      Goat     @relation(fields: [goatId], references: [id])
+  goatId    String
+
+  admin     Admin    @relation(fields: [adminId], references: [id])
+  adminId   String
+
+  date      DateTime @default(now())
 }

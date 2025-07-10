@@ -7,13 +7,17 @@ import {
   UploadedFile,
   Logger,
 
-  Param
+  Param,
+  Req,
+  UseGuards
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GoatService } from './goat.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { Request } from 'express';
+import { RequestWithAdmin } from 'src/common/interfaces/request-admin.interface';
+import { AdminAuthGuard } from 'src/Guards/AdminAuth.guard';
 
 
 @Controller('goats')
@@ -79,17 +83,91 @@ async registerGoat(
     return this.goatService.getAllGoats();
   }
 
-    @Post('scan')
-  async handleScan(@Body() body: { goatId: string }) {
-    this.logger.log(`Scanned Goat ID: ${body.goatId}`);
-    return this.goatService.toggleGoatStatus(body.goatId);
+  @UseGuards(AdminAuthGuard)
+  @Post('scan')
+  async handleScan(
+    @Body() body: { goatId: string },
+    @Req() req: RequestWithAdmin
+  ) {
+    const adminId = req.admin?.id;
+    this.logger.log(`Scanned Goat ID: ${body.goatId} by Admin ID: ${adminId}`);
+
+    return this.goatService.checkInGoat(body.goatId, adminId);
   }
+
+
+  
+  @UseGuards(AdminAuthGuard)
+  @Post('scan-out')
+  async handleScanout(
+    @Body() body: { goatId: string },
+    @Req() req: RequestWithAdmin
+  ) {
+    const adminId = req.admin?.id;
+    this.logger.log(`Scanned Goat ID: ${body.goatId} by Admin ID: ${adminId}`);
+
+    return this.goatService.checkOutGoat(body.goatId, adminId);
+  }
+
+
+
+
+
+
+
+  @UseGuards(AdminAuthGuard)
+  @Post('checkin-all')
+  async handleCheckInAll(@Req() req: RequestWithAdmin) {
+    const adminId = req.admin?.id;
+    if (!adminId) {
+      // Should never happen because guard rejects unauthenticated requests
+      this.logger.error(`No admin ID found in request.`);
+      throw new Error('Admin authentication required.');
+    }
+
+    this.logger.log(`Admin ${adminId} requested bulk check‑in`);
+
+    const result = await this.goatService.checkInAllGoats(adminId);
+
+    this.logger.log(`Checked in ${result.checkIns.length} goats`);
+    return result;
+  }
+
+@UseGuards(AdminAuthGuard)
+@Post('checkout-all')
+async handleCheckOutAll(@Req() req: RequestWithAdmin) {
+  const adminId = req.admin?.id;
+  if (!adminId) {
+    // Should never happen because guard rejects unauthenticated requests
+    this.logger.error(`No admin ID found in request.`);
+    throw new Error('Admin authentication required.');
+  }
+
+  this.logger.log(`Admin ${adminId} requested bulk check‑out`);
+
+  const result = await this.goatService.checkOutAllGoats(adminId);
+
+  this.logger.log(`Checked out ${result.checkOuts.length} goats`);
+  return result;
+}
+
+
+
+
+
+
+
 
 
 @Get('counts')
 async getGoatCounts() {
   return this.goatService.getGoatCounts();
 }
+
+
+
+
+
 
 @Get(':id')
 async getGoatById(@Param('id') id: string) {
@@ -98,13 +176,13 @@ async getGoatById(@Param('id') id: string) {
   return goat;
 }
 
+
+
   // Inside your GoatController
 @Get('status/:id')
 async getGoatStatus(@Param('id') id: string) {
   return this.goatService.getGoatStatusById(id);
 }
-
-
-
-  
+ 
 }
+ 
