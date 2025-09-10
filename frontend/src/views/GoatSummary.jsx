@@ -98,7 +98,8 @@ const GoatStatsCard = () => {
   // 🔹 Tags section (static numbers)
   const tagStats = [
     { label: "Total Goats", value: 206, icon: Tag, color: "blue" },
-    { label: "Missing Tags", value: 5, icon: AlertTriangle, color: "red" }
+    { label: "Missing Tags", value: 5, icon: AlertTriangle, color: "red" },
+    { label: "Un used Tags", value: 56, icon: AlertTriangle, color: "green" }
   ];
 
   // 🔹 Goat categories section (static numbers)
