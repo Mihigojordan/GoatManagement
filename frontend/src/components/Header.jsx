@@ -202,7 +202,7 @@ const Header = () => {
               Check In
             </NavLink>
             <NavLink
-              to="/dashboard/check_in-check_out"
+           to="/dashboard/checkout"
               className={({ isActive }) =>
                 `block px-3 py-2 text-base font-medium rounded-md transition-colors duration-200 ${
                   isActive ? 'text-teal-600 font-semibold' : 'text-gray-600 hover:text-teal-500'
