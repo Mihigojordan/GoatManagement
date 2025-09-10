@@ -3,7 +3,6 @@ import { TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import GoatRegistrationService from "../Services/GoatManagement";
 
-
 const GoatStatsCard = () => {
   const [stats, setStats] = useState({
     totalGoats: 0,
@@ -13,27 +12,25 @@ const GoatStatsCard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-useEffect(() => {
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      const data = await GoatRegistrationService.getGoatCounts(); // ✅ This already returns .data
-      setStats(data); // ✅ use data directly
-      setError(null);
-    } catch (err) {
-      setError(err.message || 'Error fetching goat statistics');
-      console.error('Error fetching goat stats:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const data = await GoatRegistrationService.getGoatCounts();
+        setStats(data);
+        setError(null);
+      } catch (err) {
+        setError(err.message || 'Error fetching goat statistics');
+        console.error('Error fetching goat stats:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchStats();
-  const interval = setInterval(fetchStats, 30000);
-  return () => clearInterval(interval);
-}, []);
-
-
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (
@@ -73,6 +70,15 @@ useEffect(() => {
     ? Math.round((stats.checkedInGoats / stats.totalGoats) * 100) 
     : 0;
 
+  // 🔹 Static goat data
+  const staticStats = [
+    { label: "Older Female", value: 20, icon: "👵", bg: "bg-pink-100", hover: "group-hover:bg-pink-200" },
+    { label: "Older Male", value: 2, icon: "👴", bg: "bg-blue-100", hover: "group-hover:bg-blue-200" },
+    { label: "Young Female", value: 30, icon: "👧", bg: "bg-purple-100", hover: "group-hover:bg-purple-200" },
+    { label: "Young Male", value: 40, icon: "👦", bg: "bg-yellow-100", hover: "group-hover:bg-yellow-200" },
+    { label: "Death", value: 10, icon: "⚰️", bg: "bg-gray-200", hover: "group-hover:bg-gray-300" },
+  ];
+
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
       {/* Header */}
@@ -80,7 +86,7 @@ useEffect(() => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Goat Management Overview</h2>
-            <p className="text-sm text-gray-500 mt-1">Real-time statistics</p>
+            <p className="text-sm text-gray-500 mt-1">Real-time statistics + categories</p>
           </div>
           <div className="p-3 bg-teal-100 rounded-full">
             <TrendingUp className="w-6 h-6 text-teal-600" />
@@ -89,7 +95,8 @@ useEffect(() => {
       </div>
 
       {/* Stats Grid */}
-      <div className="p-6">
+      <div className="p-6 space-y-10">
+        {/* 🔹 Dynamic Section */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {/* Total Goats */}
           <div className="text-center group">
@@ -126,6 +133,21 @@ useEffect(() => {
               <p className="text-xs text-gray-500">Currently away</p>
             </div>
           </div>
+        </div>
+
+        {/* 🔹 Static Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-6">
+          {staticStats.map((item, idx) => (
+            <div key={idx} className="text-center group">
+              <div className={`inline-flex items-center justify-center w-16 h-16 ${item.bg} rounded-full mb-4 ${item.hover} transition-colors duration-200`}>
+                <span className="text-2xl">{item.icon}</span>
+              </div>
+              <div className="space-y-1">
+                <p className="text-3xl font-bold text-gray-900">{item.value}</p>
+                <p className="text-sm font-medium text-gray-600">{item.label}</p>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Progress Bar */}
