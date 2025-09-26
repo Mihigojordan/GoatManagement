@@ -9,6 +9,7 @@ import { Children, lazy, Suspense } from "react";
 import Loader from "../components/Loading.jsx";
 import BarcodeCheckout from "../views/checkout.jsx";
 import BarcodeCheckin from "../views/checkin.jsx";
+import Tracking from "../views/Tracking.jsx";
 
 
 const ErrorLayout = lazy(() => import('../Error/ErrorLayout.jsx'));
@@ -109,6 +110,15 @@ const routes = [
                 element: (
                   <SuspenseWrapper>
                     <BarcodeCheckin />
+                  </SuspenseWrapper>
+                ),
+              },
+                
+              {
+                path: "Tracking",
+                element: (
+                  <SuspenseWrapper>
+                    <Tracking />
                   </SuspenseWrapper>
                 ),
               },

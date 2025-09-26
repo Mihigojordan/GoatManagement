@@ -14,12 +14,12 @@ export class GoatService {
     private emailService: EmailService,
   ) {}
 
-  // ✅ Helper method to generate a 12-digit base for EAN-13
+  // ✅ Generate 12-digit base for EAN-13 barcode
   private generateEAN13Base(): string {
     return Math.floor(100000000000 + Math.random() * 900000000000).toString();
   }
 
-  // ✅ Helper method to calculate EAN-13 check digit
+  // ✅ Calculate EAN-13 check digit
   private calculateEAN13CheckDigit(base: string): string {
     let sum = 0;
     for (let i = 0; i < 12; i++) {
@@ -29,17 +29,12 @@ export class GoatService {
     return ((10 - (sum % 10)) % 10).toString();
   }
 
-  // ✅ Register goat and generate barcode
+  // ✅ Register a goat with barcode + email
   async registerGoat(data: any) {
-    if (data.dateOfBirth) {
-      data.dateOfBirth = new Date(data.dateOfBirth);
-    }
+    if (data.dateOfBirth) data.dateOfBirth = new Date(data.dateOfBirth);
+    if (data.weight) data.weight = Number(data.weight);
 
-    if (data.weight) {
-      data.weight = Number(data.weight);
-    }
-
-    // Generate unique 13-digit EAN ID
+    // Generate unique 13-digit ID
     let generatedId: string;
     do {
       const base = this.generateEAN13Base();
@@ -47,56 +42,42 @@ export class GoatService {
       generatedId = base + checkDigit;
     } while (await this.prisma.goat.findUnique({ where: { id: generatedId } }));
 
-    // Create the goat
     const goat = await this.prisma.goat.create({
-      data: {
-        ...data,
-        id: generatedId,
-      },
+      data: { ...data, id: generatedId },
     });
 
+    // ✅ Generate barcode
     const barcodeValue = goat.id;
-
-    // ✅ Generate barcode image
     const barcodeBuffer = await bwipjs.toBuffer({
       bcid: 'ean13',
       text: barcodeValue,
-      scale: 2.5,                // Small but clear
+      scale: 2.5,
       height: 15,
       includetext: true,
-      paddingwidth: 10,
-      paddingheight: 10,
       textxalign: 'center',
       backgroundcolor: 'FFFFFF',
     });
 
     // ✅ Save barcode image
     const barcodeDir = join(__dirname, '../../../public/barcodes');
-    if (!fs.existsSync(barcodeDir)) {
-      fs.mkdirSync(barcodeDir, { recursive: true });
-    }
+    if (!fs.existsSync(barcodeDir)) fs.mkdirSync(barcodeDir, { recursive: true });
 
     const fileName = `${barcodeValue}.png`;
     const barcodePath = join(barcodeDir, fileName);
     fs.writeFileSync(barcodePath, barcodeBuffer);
 
-    // ✅ Email barcode
+    // ✅ Send email
     try {
       await this.emailService.sendEmail({
         to: 'ishimwegoatfarm@gmail.com',
-        subject: '🐐 Goat Registered with Barcode (ID)',
+        subject: '🐐 Goat Registered with Barcode',
         html: `
-          <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;">
-            <h2 style="color: #2c3e50;">🐐 New Goat Registration</h2>
-            <table style="width: 100%; max-width: 600px; border-collapse: collapse; margin-top: 20px;">
-              <tr><td><strong>Name</strong></td><td>${goat.goatName}</td></tr>
-              <tr><td><strong>Breed</strong></td><td>${goat.breed}</td></tr>
-              <tr><td><strong>Gender</strong></td><td>${goat.Gender}</td></tr>
-              <tr><td><strong>Goat ID (Barcode)</strong></td><td><strong>${goat.id}</strong></td></tr>
-            </table>
-            <p style="margin-top: 20px;">✅ Barcode attached. Please print and tag the goat.</p>
-            <p style="font-size: 12px; color: #888;">Sent on ${new Date().toLocaleString()}</p>
-          </div>
+          <h2>🐐 New Goat Registration</h2>
+          <p><strong>Name:</strong> ${goat.goatName}</p>
+          <p><strong>Breed:</strong> ${goat.breed}</p>
+          <p><strong>Gender:</strong> ${goat.Gender}</p>
+          <p><strong>ID:</strong> ${goat.id}</p>
+          <p>✅ Barcode attached.</p>
         `,
         attachments: [
           {
@@ -106,229 +87,158 @@ export class GoatService {
           },
         ],
       });
-    } catch (error) {
-      this.logger.error('❌ Failed to send barcode email', error);
+    } catch (err) {
+      this.logger.error('Failed to send barcode email', err);
     }
 
     return {
-      message: 'Goat registered and barcode emailed (EAN-13 format).',
-      data: goat,
+      message: 'Goat registered successfully.',
+      goat,
     };
   }
 
   // ✅ Get all goats
   async getAllGoats() {
-    return this.prisma.goat.findMany({ orderBy: { createdAt: 'desc' } });
+    return this.prisma.goat.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  // ✅ Toggle goat check-in/check-out status
-async checkInGoat(goatId: string, adminId: string | undefined) {
-  if (!adminId) {
-    throw new Error('Admin ID is required');
+  // ✅ Check in goat
+  async checkInGoat(goatId: string, adminId: string) {
+    if (!adminId) throw new Error('Admin ID required');
+
+    const goat = await this.prisma.goat.findUnique({ where: { id: goatId } });
+    if (!goat) throw new NotFoundException('Goat not found');
+
+    // Ensure goat is currently checked out
+    const checkOutRecord = await this.prisma.checkOut.findFirst({ where: { goatId } });
+    if (!checkOutRecord) throw new Error('This goat is not currently checked out');
+
+    // Remove checkout
+    await this.prisma.checkOut.deleteMany({ where: { goatId } });
+
+    // Create checkin
+    const checkIn = await this.prisma.checkIn.create({
+      data: { goatId, adminId },
+    });
+
+    return {
+      message: `Goat ${goat.goatName} checked in successfully`,
+      checkIn,
+    };
   }
 
+  // ✅ Check out goat
+  async checkOutGoat(goatId: string, adminId: string) {
+    if (!adminId) throw new Error('Admin ID required');
 
-  // Check if goat is in checkOut table
-  const checkOutRecord = await this.prisma.checkOut.findFirst({
-    where: { goatId },
-  });
+    const goat = await this.prisma.goat.findUnique({ where: { id: goatId } });
+    if (!goat) throw new NotFoundException('Goat not found');
 
-  if (!checkOutRecord) {
-    throw new Error('This goat is not currently checked out');
+    // Ensure goat is currently checked in
+    const checkInRecord = await this.prisma.checkIn.findFirst({ where: { goatId } });
+    if (!checkInRecord) throw new Error('This goat is not currently checked in');
+
+    // Remove checkin
+    await this.prisma.checkIn.deleteMany({ where: { goatId } });
+
+    // Create checkout
+    const checkOut = await this.prisma.checkOut.create({
+      data: { goatId, adminId },
+    });
+
+    return {
+      message: `Goat ${goat.goatName} checked out successfully`,
+      checkOut,
+    };
   }
 
- // Remove the checkout record(s)
-  await this.prisma.checkOut.deleteMany({
-    where: { goatId },
-  });
-
-  // Check the goat in
-  const checkIn = await this.prisma.checkIn.create({
-    data: {
-      goatId,
-      adminId,
-    },
-  });
-
-  return checkIn;
-}
-
-
+  // ✅ Check in all goats
   async checkInAllGoats(adminId: string) {
-    // (Guard ensures adminId is valid, but we can still sanity‑check if needed)
-    const admin = await this.prisma.admin.findUnique({ where: { id: adminId } });
-    if (!admin) {
-      throw new Error(`Admin with ID ${adminId} does not exist.`);
-    }
-
-    const allGoats = await this.prisma.goat.findMany();
-    if (allGoats.length === 0) {
-      throw new Error('No goats found to check in.');
-    }
+    const goats = await this.prisma.goat.findMany();
+    if (goats.length === 0) throw new Error('No goats found');
 
     const checkIns = await Promise.all(
-      allGoats.map((goat) =>
-        this.prisma.checkIn.create({
-          data: {
-            goatId: goat.id,
-            adminId,
-          },
-        }),
+      goats.map(async (goat) =>
+        this.prisma.checkIn.create({ data: { goatId: goat.id, adminId } }),
       ),
     );
 
     return {
-      message: `${checkIns.length} goats have been checked in by admin ${adminId}`,
-      checkIns,
+      message: `${checkIns.length} goats checked in successfully`,
+      count: checkIns.length,
     };
   }
+
+  // ✅ Check out all goats
   async checkOutAllGoats(adminId: string) {
-  // Sanity check for admin existence
-  const admin = await this.prisma.admin.findUnique({ where: { id: adminId } });
-  if (!admin) {
-    throw new Error(`Admin with ID ${adminId} does not exist.`);
+    const checkIns = await this.prisma.checkIn.findMany();
+    if (checkIns.length === 0) throw new Error('No goats are checked in');
+
+    const checkOuts = await Promise.all(
+      checkIns.map(async (record) => {
+        await this.prisma.checkIn.delete({ where: { id: record.id } });
+        return this.prisma.checkOut.create({
+          data: { goatId: record.goatId, adminId },
+        });
+      }),
+    );
+
+    return {
+      message: `${checkOuts.length} goats checked out successfully`,
+      count: checkOuts.length,
+    };
   }
 
-  // Fetch all check-in records
-  const checkInRecords = await this.prisma.checkIn.findMany({
-    select: { goatId: true, adminId: true },
-  });
-
-  if (checkInRecords.length === 0) {
-    throw new Error('No goats are currently checked in.');
-  }
-
-  // For each checked-in goat, move to checkOut
-  const checkOuts = await Promise.all(
-    checkInRecords.map(async (record) => {
-      const checkOut = await this.prisma.checkOut.create({
-        data: {
-          goatId: record.goatId,
-          adminId: record.adminId,
-        },
-      });
-
-      await this.prisma.checkIn.deleteMany({
-        where: {
-          goatId: record.goatId,
-          adminId: record.adminId,
-        },
-      });
-
-      return checkOut;
-    }),
-  );
-
-  return {
-    message: `${checkOuts.length} goats have been checked out by admin ${adminId}`,
-    checkOuts,
-  };
-}
-
-
-
-
-
-
-async checkOutGoat(goatId: string, adminId: string | undefined) {
-  if (!adminId) {
-    throw new Error('Admin ID is required');
-  }
-
-  // Check if goat exists
-  const goat = await this.prisma.goat.findUnique({ where: { id: goatId } });
-  if (!goat) {
-    throw new Error('Goat not found');
-  }
-
-  // Remove from checkIn table (if exists)
-  await this.prisma.checkIn.deleteMany({
-    where: { goatId },
-  });
-
-  // Add to checkOut table
-  const checkOut = await this.prisma.checkOut.create({
-    data: {
-      goatId,
-      adminId,
-    },
-  });
-
-  return {
-    message: `Goat ${goat.goatName} checked out by admin ${adminId}`,
-    checkOut,
-  };
-}
-
-
-
-
-  // ✅ Get single goat by ID
+  // ✅ Get goat by ID
   async getGoatById(id: string) {
-    return this.prisma.goat.findUnique({
+    const goat = await this.prisma.goat.findUnique({
       where: { id },
-    });
-  }
-
-  // ✅ Get goat check-in status only
-async getGoatStatusById(id: string) {
-  const goat = await this.prisma.goat.findUnique({
-    where: { id },
-  });
-
-  if (!goat) {
-    throw new NotFoundException(`Goat with ID ${id} not found`);
-  }
-
-  return {
-    message: 'Goat data retrieved successfully',
-    data: goat,
-  };
-}
-
-
-  // ✅ Get goat count stats
-async getGoatCounts() {
-  const totalGoats = await this.prisma.goat.count();
-
-  const goats = await this.prisma.goat.findMany({
-    select: {
-      id: true,
-      checkIns: {
-        orderBy: { date: 'desc' },
-        take: 1,
-        select: { date: true }
+      include: {
+        checkIns: {
+          include: { admin: { select: { names: true, email: true } } },
+          orderBy: { date: 'desc' },
+        },
+        checkOuts: {
+          include: { admin: { select: { names: true, email: true } } },
+          orderBy: { date: 'desc' },
+        },
       },
-      checkOuts: {
-        orderBy: { date: 'desc' },
-        take: 1,
-        select: { date: true }
-      }
-    }
-  });
+    });
 
-  let checkedInGoats = 0;
-  let checkedOutGoats = 0;
+    if (!goat) throw new NotFoundException(`Goat with ID ${id} not found`);
 
-  for (const goat of goats) {
-    const lastCheckIn = goat.checkIns[0]?.date;
-    const lastCheckOut = goat.checkOuts[0]?.date;
-
-    if (lastCheckIn && (!lastCheckOut || lastCheckIn > lastCheckOut)) {
-      checkedInGoats++;
-    } else if (lastCheckOut && (!lastCheckIn || lastCheckOut > lastCheckIn)) {
-      checkedOutGoats++;
-    }
+    return {
+      message: 'Goat retrieved successfully',
+      data: goat,
+    };
   }
 
-  return {
-    totalGoats,
-    checkedInGoats,
-    checkedOutGoats
-  };
-}
+  // ✅ Get goat status summary
+  async getGoatCounts() {
+    const total = await this.prisma.goat.count();
+    const checkedIn = await this.prisma.checkIn.count();
+    const checkedOut = await this.prisma.checkOut.count();
 
+    return {
+      totalGoats: total,
+      checkedInGoats: checkedIn,
+      checkedOutGoats: checkedOut,
+    };
+  }
 
+  // ✅ Get full history (all check-ins and check-outs)
+  async getTrackingHistory() {
+    const checkIns = await this.prisma.checkIn.findMany({
+      include: { goat: true, admin: true },
+      orderBy: { date: 'desc' },
+    });
+    const checkOuts = await this.prisma.checkOut.findMany({
+      include: { goat: true, admin: true },
+      orderBy: { date: 'desc' },
+    });
 
-
+    return { checkIns, checkOuts };
+  }
 }

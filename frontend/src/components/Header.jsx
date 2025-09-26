@@ -19,7 +19,6 @@ const Header = () => {
         console.error('Error fetching user data:', error);
       }
     };
-
     fetchUser();
   }, []);
 
@@ -29,16 +28,13 @@ const Header = () => {
         setIsDropdownOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
-  const handleUsername = (name) => {
-    return adminServiceInstance.getInitials(name);
-  };
+  const handleUsername = (name) => adminServiceInstance.getInitials(name);
 
   const handleLogout = async () => {
     try {
@@ -54,7 +50,7 @@ const Header = () => {
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm p-2">
       <div className="max-w-8xl mx-auto px-6 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo (left) */}
+          {/* Logo */}
           <div className="flex-shrink-0">
             <div className="text-xl sm:text-2xl font-bold text-teal-600 flex items-center">
               <span className="text-2xl sm:text-2xl mr-2">🐐</span>
@@ -63,7 +59,7 @@ const Header = () => {
             </div>
           </div>
 
-          {/* Desktop Navigation - hidden on mobile */}
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
             <NavLink
               to="/dashboard"
@@ -90,7 +86,6 @@ const Header = () => {
             >
               Manage Goat
             </NavLink>
-            {/* Separate links for Checkin and Checkout */}
             <NavLink
               to="/dashboard/check_in-check_out"
               className={({ isActive }) =>
@@ -115,11 +110,26 @@ const Header = () => {
             >
               Check Out
             </NavLink>
+
+            {/* Tracking - only visible to Admin */}
+            {user?.role === 'Admin' && (
+              <NavLink
+                to="/dashboard/tracking"
+                className={({ isActive }) =>
+                  `px-3 py-2 text-sm font-medium transition-colors duration-200 border-b-2 ${
+                    isActive
+                      ? 'text-teal-600 border-teal-500'
+                      : 'text-gray-600 border-transparent hover:text-teal-500 hover:border-teal-300'
+                  }`
+                }
+              >
+                Tracking
+              </NavLink>
+            )}
           </nav>
 
-          {/* Right side - User info and mobile menu button */}
+          {/* Right side - User info */}
           <div className="flex items-center space-x-2 sm:space-x-4">
-            {/* User greeting - hidden on small screens */}
             <span className="text-gray-700 text-sm hidden lg:block">
               Hello, {user?.names || 'User'}
             </span>
@@ -163,7 +173,7 @@ const Header = () => {
         {/* Mobile Navigation Menu */}
         <div
           className={`md:hidden transition-all duration-300 ease-in-out ${
-            isMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+            isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
           }`}
         >
           <nav className="px-2 pt-2 pb-4 space-y-1 bg-gray-50 rounded-lg mt-2 mb-2">
@@ -189,7 +199,6 @@ const Header = () => {
             >
               Manage Goat
             </NavLink>
-            {/* Mobile separate links */}
             <NavLink
               to="/dashboard/check_in-check_out"
               className={({ isActive }) =>
@@ -202,7 +211,7 @@ const Header = () => {
               Check In
             </NavLink>
             <NavLink
-           to="/dashboard/checkout"
+              to="/dashboard/checkout"
               className={({ isActive }) =>
                 `block px-3 py-2 text-base font-medium rounded-md transition-colors duration-200 ${
                   isActive ? 'text-teal-600 font-semibold' : 'text-gray-600 hover:text-teal-500'
@@ -212,6 +221,21 @@ const Header = () => {
             >
               Check Out
             </NavLink>
+
+            {/* Tracking - mobile menu, only for Admin */}
+            {user?.role === 'Admin' && (
+              <NavLink
+                to="/dashboard/tracking"
+                className={({ isActive }) =>
+                  `block px-3 py-2 text-base font-medium rounded-md transition-colors duration-200 ${
+                    isActive ? 'text-teal-600 font-semibold' : 'text-gray-600 hover:text-teal-500'
+                  }`
+                }
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Tracking
+              </NavLink>
+            )}
           </nav>
         </div>
       </div>

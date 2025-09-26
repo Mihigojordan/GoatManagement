@@ -6,183 +6,123 @@ import {
   UseInterceptors,
   UploadedFile,
   Logger,
-
   Param,
   Req,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GoatService } from './goat.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { Request } from 'express';
 import { RequestWithAdmin } from 'src/common/interfaces/request-admin.interface';
 import { AdminAuthGuard } from 'src/Guards/AdminAuth.guard';
 
-
 @Controller('goats')
 export class GoatController {
-      private readonly logger = new Logger(GoatController.name);
+  private readonly logger = new Logger(GoatController.name);
+
   constructor(private readonly goatService: GoatService) {}
 
-@Post()
-@UseInterceptors(
-  FileInterceptor('image', {
-    storage: diskStorage({
-      destination: './uploads/goats',
- filename: (req, file, cb) => {
-  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  // ✅ Register Goat with Image Upload
+  @Post()
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: './uploads/goats',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          let ext = extname(file.originalname);
+          if (!ext) ext = '.jpg';
+          cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
+  async registerGoat(@UploadedFile() file: Express.Multer.File, @Body() dto: any) {
+    this.logger.log('📦 Registering new goat', dto);
 
-  let ext = extname(file.originalname);
+    const parsedGoatData = {
+      goatName: dto.goatName,
+      breed: dto.breed,
+      dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : null,
+      Gender: dto.Gender,
+      color: dto.color,
+      weight: dto.weight ? Number(dto.weight) : null,
+      sireName: dto.sireName,
+      sireRegistrationNumber: dto.sireRegistrationNumber,
+      damName: dto.damName,
+      damRegistrationNumber: dto.damRegistrationNumber,
+      image: file?.path || null,
+    };
 
-  // If no extension, fallback to .jpg
-  if (!ext) {
-    ext = '.jpg';
+    const goat = await this.goatService.registerGoat(parsedGoatData);
+    return { message: 'Goat registered successfully.', data: goat };
   }
 
-  cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-},
-
-    }),
-  }),
-)
-async registerGoat(
-  @UploadedFile() file: Express.Multer.File,
-  @Body() dto: any,
-) {
-  console.log('📦 Raw body:', dto);
-  console.log('📷 File:', file);
-
-  const parsedGoatData = {
-    goatName: dto.goatName,
-    breed: dto.breed,
-    dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : null,
-    Gender: dto.Gender,
-    color: dto.color,
-    weight: dto.weight ? Number(dto.weight) : null,
-    sireName: dto.sireName,
-    sireRegistrationNumber: dto.sireRegistrationNumber,
-    damName: dto.damName,
-    damRegistrationNumber: dto.damRegistrationNumber,
-    image: file?.path || null,
-  };
-
-  const goat = await this.goatService.registerGoat(parsedGoatData);
-
-  return {
-    message: 'Goat registered successfully.',
-    data: goat,
-  };
-}
-
-
-
-  // Get all goats
+  // ✅ Get All Goats
   @Get()
   async getAllGoats() {
     return this.goatService.getAllGoats();
   }
 
+  // ✅ Scan (Check-In)
   @UseGuards(AdminAuthGuard)
   @Post('scan')
-  async handleScan(
-    @Body() body: { goatId: string },
-    @Req() req: RequestWithAdmin
-  ) {
-    const adminId = req.admin?.id;
-    this.logger.log(`Scanned Goat ID: ${body.goatId} by Admin ID: ${adminId}`);
-
-    return this.goatService.checkInGoat(body.goatId, adminId);
+  async handleScan(@Body() body: { goatId: string }, @Req() req: RequestWithAdmin) {
+const adminId = req.admin!.id; // the "!" tells TS it’s definitely defined
+this.logger.log(`📥 Check-In: Goat ${body.goatId} by Admin ${adminId}`);
+return this.goatService.checkInGoat(body.goatId, adminId);
   }
 
-
-  
+  // ✅ Scan Out (Check-Out)
   @UseGuards(AdminAuthGuard)
   @Post('scan-out')
-  async handleScanout(
-    @Body() body: { goatId: string },
-    @Req() req: RequestWithAdmin
-  ) {
-    const adminId = req.admin?.id;
-    this.logger.log(`Scanned Goat ID: ${body.goatId} by Admin ID: ${adminId}`);
-
-    return this.goatService.checkOutGoat(body.goatId, adminId);
+  async handleScanOut(@Body() body: { goatId: string }, @Req() req: RequestWithAdmin) {
+const adminId = req.admin?.id;
+if (!adminId) {
+  throw new Error('Admin ID is required.');
+}
+return this.goatService.checkInGoat(body.goatId, adminId);
   }
 
-
-
-
-
-
-
+  // ✅ Bulk Check-In
   @UseGuards(AdminAuthGuard)
   @Post('checkin-all')
   async handleCheckInAll(@Req() req: RequestWithAdmin) {
     const adminId = req.admin?.id;
-    if (!adminId) {
-      // Should never happen because guard rejects unauthenticated requests
-      this.logger.error(`No admin ID found in request.`);
-      throw new Error('Admin authentication required.');
-    }
-
-    this.logger.log(`Admin ${adminId} requested bulk check‑in`);
-
-    const result = await this.goatService.checkInAllGoats(adminId);
-
-    this.logger.log(`Checked in ${result.checkIns.length} goats`);
-    return result;
+    if (!adminId) throw new Error('Admin authentication required.');
+    this.logger.log(`⚙️ Bulk check-in by Admin ${adminId}`);
+    return this.goatService.checkInAllGoats(adminId);
   }
 
-@UseGuards(AdminAuthGuard)
-@Post('checkout-all')
-async handleCheckOutAll(@Req() req: RequestWithAdmin) {
-  const adminId = req.admin?.id;
-  if (!adminId) {
-    // Should never happen because guard rejects unauthenticated requests
-    this.logger.error(`No admin ID found in request.`);
-    throw new Error('Admin authentication required.');
+  // ✅ Bulk Check-Out
+  @UseGuards(AdminAuthGuard)
+  @Post('checkout-all')
+  async handleCheckOutAll(@Req() req: RequestWithAdmin) {
+    const adminId = req.admin?.id;
+    if (!adminId) throw new Error('Admin authentication required.');
+    this.logger.log(`⚙️ Bulk check-out by Admin ${adminId}`);
+    return this.goatService.checkOutAllGoats(adminId);
   }
 
-  this.logger.log(`Admin ${adminId} requested bulk check‑out`);
+  // ✅ Goat Counts
+  @Get('counts')
+  async getGoatCounts() {
+    return this.goatService.getGoatCounts();
+  }
 
-  const result = await this.goatService.checkOutAllGoats(adminId);
+  // ✅ Goat Tracking History (All Check-Ins & Check-Outs)
+  @Get('tracking')
+  async getTrackingHistory() {
+    return this.goatService.getTrackingHistory();
+  }
 
-  this.logger.log(`Checked out ${result.checkOuts.length} goats`);
-  return result;
+  // ✅ Get Single Goat by ID
+  @Get(':id')
+  async getGoatById(@Param('id') id: string) {
+    this.logger.log(`Fetching goat with ID: ${id}`);
+    return this.goatService.getGoatById(id);
+  }
+
+
 }
-
-
-
-
-
-
-
-
-
-@Get('counts')
-async getGoatCounts() {
-  return this.goatService.getGoatCounts();
-}
-
-
-
-
-
-
-@Get(':id')
-async getGoatById(@Param('id') id: string) {
-  console.log('Received ID:', id); // Log the ID
-  const goat = await this.goatService.getGoatById(id);
-  return goat;
-}
-
-
-
-  // Inside your GoatController
-@Get('status/:id')
-async getGoatStatus(@Param('id') id: string) {
-  return this.goatService.getGoatStatusById(id);
-}
- 
-}
- 
